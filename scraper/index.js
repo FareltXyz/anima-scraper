@@ -29,7 +29,7 @@ AnimaScraper.prototype._callProvider = function _callProvider(methodName, args) 
   if (typeof this.provider[methodName] !== 'function') {
     return Promise.reject(
       new ScraperError(
-        `Method "${methodName}" tidak didukung oleh provider "${this.providerName}".`,
+        `Method "${methodName}" is not supported by provider "${this.providerName}".`,
         501
       )
     );

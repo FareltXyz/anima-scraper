@@ -1508,8 +1508,7 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
           this.isDark = savedTheme !== 'light';
 
           // Initialize language (defaults to 'en')
-          const savedLang = localStorage.getItem('anima_lang');
-          this.lang = savedLang === 'id' ? 'id' : 'en';
+          this.lang = 'en';
           document.documentElement.lang = this.lang;
 
           // Initialize Prism syntax highlighting

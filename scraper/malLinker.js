@@ -284,7 +284,7 @@ class MalSokujaLinker {
   async resolveMalId(malId) {
     const parsedId = parseInt(malId, 10);
     if (!parsedId || parsedId <= 0 || String(malId).trim() !== String(parsedId)) {
-      throw new ScraperError('MyAnimeList ID harus berupa angka positif (contoh: 52991).', 400);
+      throw new ScraperError('MyAnimeList ID must be a positive integer (e.g. 52991).', 400);
     }
 
     const now = Date.now();
@@ -296,7 +296,7 @@ class MalSokujaLinker {
       this.linkCache.delete(parsedId);
     }
 
-    // 1. Ambil metadata anime dari MyAnimeList
+    // 1. Fetch anime metadata from MyAnimeList
     const malAnime = await this.mal.getAnimeById(parsedId);
     const rawTitles = [
       malAnime.title,
@@ -320,7 +320,7 @@ class MalSokujaLinker {
       titleFeatures
     };
 
-    // 2. Kumpulkan kandidat dari direktori penuh Sokuja A-Z (/anime/list-mode/)
+    // 2. Collect candidates from Sokuja full A-Z directory (/anime/list-mode/)
     const azResult = await this.sokuja.getAnimeListAZ();
     const candidatesMap = new Map();
     for (const group of azResult.groups) {
@@ -343,8 +343,8 @@ class MalSokujaLinker {
 
     let ranked = rankCandidates();
 
-    // 3. Jika skor kandidat teratas belum cukup tinggi (misal judul di Sokuja memakai sinonim/judul alternatif),
-    //    jalankan pencarian Sokuja `/?s=` menggunakan kata kunci utama dari judul default & English MAL
+    // 3. If top candidate score is not high enough (e.g., title in Sokuja uses a synonym/alternative title),
+    //    run Sokuja search `/?s=` using primary keywords from default & English MAL titles
     if (!ranked.length || ranked[0].matchScore < 85) {
       const searchQueries = new Set();
       for (const feat of titleFeatures.slice(0, 2)) {
@@ -361,11 +361,11 @@ class MalSokujaLinker {
             }
           }
         } catch {
-          // Abaikan bila salah satu pencarian gagal
+          // Ignore if any search query fails
         }
       }
 
-      // Periksa detail `alternativeTitles` pada 3 hasil pencarian teratas jika masih belum yakin
+      // Inspect `alternativeTitles` detail on top search candidates if still not certain
       const searchCandidates = Array.from(candidatesMap.values()).slice(-8);
       for (const sc of searchCandidates) {
         if (!sc.alternativeTitles) {
@@ -378,7 +378,7 @@ class MalSokujaLinker {
               alternativeTitles: detail.alternativeTitles
             });
           } catch {
-            // Lewati jika gagal fetch detail
+            // Skip if detail fetch fails
           }
         }
       }
@@ -387,12 +387,12 @@ class MalSokujaLinker {
     }
 
     const best = ranked[0] || null;
-    // Ambang batas minimum agar anime yang memang tidak ada di Sokuja tidak salah terhubung ke judul lain
+    // Minimum match threshold so anime not on Sokuja is not incorrectly linked to another title
     const MIN_MATCH_SCORE = 62;
 
     if (!best || best.matchScore < MIN_MATCH_SCORE) {
       throw new ScraperError(
-        `Anime MyAnimeList ID ${parsedId} ("${malAnime.title}") tidak ditemukan / belum tersedia di Sokuja.`,
+        `Anime MyAnimeList ID ${parsedId} ("${malAnime.title}") not found / not yet available on Sokuja.`,
         404
       );
     }

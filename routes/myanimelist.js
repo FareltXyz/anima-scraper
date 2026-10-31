@@ -4,7 +4,7 @@ const { AnimaScraper } = require('../scraper');
 const router = express.Router();
 const malScraper = new AnimaScraper({ provider: 'myanimelist' });
 
-// Index / Dokumentasi Endpoint MyAnimeList
+// Index / Endpoint Documentation for MyAnimeList
 router.get('/', (req, res) => {
   const basePath = req.baseUrl || '/api/v1/myanimelist';
   res.json({

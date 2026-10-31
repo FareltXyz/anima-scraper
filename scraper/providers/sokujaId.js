@@ -111,7 +111,7 @@ function extractSlug(input, prefix = null) {
     }
   }
 
-  // Ambil segmen terakhir yang bersih
+  // Extract the clean last segment
   const segments = pathname.split('/').filter(Boolean);
   return segments.length ? decodeURIComponent(segments[segments.length - 1]) : null;
 }
@@ -124,7 +124,7 @@ function parseNumber(text, isFloat = false) {
   const cleaned = String(text).replace(/,/g, '').trim();
   if (!cleaned || cleaned === '-' || cleaned === '?' || cleaned === 'N/A') return null;
 
-  // Support shorthand seperti "1.4K"
+  // Support shorthand notation like "1.4K"
   const kMatch = cleaned.match(/(-?\d+(?:\.\d+)?)\s*([kKmM])\b/);
   if (kMatch && !isFloat) {
     const base = parseFloat(kMatch[1]);
@@ -195,7 +195,7 @@ function parseImages(imgEl, baseUrl = BASE_URL) {
         };
       }
     } catch {
-      // Fallback ke URL apa adanya
+      // Fallback to raw URL
     }
   }
 
@@ -218,7 +218,7 @@ function loadHydratedCheerio(html) {
     const num = idAttr.slice(2);
     const tmpl = $(`template[id="B:${num}"]`);
     if (tmpl.length) {
-      // Hapus skeleton placeholder di antara <template id="B:N"> dan komentar penutup <!--/$-->
+      // Remove skeleton placeholders between <template id="B:N"> and closing comment <!--/$-->
       let node = tmpl[0].next;
       while (node) {
         const nextNode = node.next;
@@ -250,7 +250,7 @@ function extractNextFlightText($) {
       try {
         chunks.push(JSON.parse(`"${match[1]}"`));
       } catch {
-        // Lewati chunk non-standar
+        // Skip non-standard chunks
       }
     }
   });
@@ -310,7 +310,7 @@ function extractJsonLd($) {
       if (Array.isArray(parsed)) results.push(...parsed);
       else results.push(parsed);
     } catch {
-      // Abaikan JSON-LD invalid
+      // Ignore invalid JSON-LD
     }
   });
   return results;
@@ -319,7 +319,7 @@ function extractJsonLd($) {
 class SokujaId {
   constructor(options = {}) {
     this.baseUrl = (options.baseUrl || BASE_URL).replace(/\/+$/, '');
-    this.cacheTTL = options.cacheTTL ?? 5 * 60 * 1000; // Default 5 menit cache
+    this.cacheTTL = options.cacheTTL ?? 5 * 60 * 1000; // Default 5 minute cache
     this.cache = new Map();
     this.malLinker = new MalSokujaLinker({
       sokujaProvider: this,
@@ -342,17 +342,17 @@ class SokujaId {
     try {
       response = await fetch(url, { headers: DEFAULT_HEADERS });
     } catch (err) {
-      throw new ScraperError(`Gagal menghubungi server Sokuja (${err.message})`, 502);
+      throw new ScraperError(`Failed to connect to Sokuja server (${err.message})`, 502);
     }
 
     if (response.status === 404) {
-      throw new ScraperError(`Halaman tidak ditemukan di Sokuja (${url})`, 404);
+      throw new ScraperError(`Page not found on Sokuja (${url})`, 404);
     }
     if (response.status === 429) {
-      throw new ScraperError('Terlalu banyak request ke Sokuja (rate limited). Coba lagi beberapa saat.', 429);
+      throw new ScraperError('Too many requests to Sokuja (rate limited). Please try again later.', 429);
     }
     if (!response.ok) {
-      throw new ScraperError(`Gagal mengambil halaman Sokuja (HTTP ${response.status})`, 502);
+      throw new ScraperError(`Failed to fetch Sokuja page (HTTP ${response.status})`, 502);
     }
 
     const html = await response.text();
@@ -385,11 +385,11 @@ class SokujaId {
         }
       });
     } catch (err) {
-      throw new ScraperError(`Gagal mengambil data JSON Sokuja (${err.message})`, 502);
+      throw new ScraperError(`Failed to fetch Sokuja JSON data (${err.message})`, 502);
     }
 
     if (!response.ok) {
-      throw new ScraperError(`Gagal mengambil data JSON Sokuja (HTTP ${response.status})`, 502);
+      throw new ScraperError(`Failed to fetch Sokuja JSON data (HTTP ${response.status})`, 502);
     }
 
     const json = await response.json();
@@ -519,11 +519,11 @@ class SokujaId {
         const u = new URL(toAbsoluteUrl(href, this.baseUrl));
         const p = parseInt(u.searchParams.get('page'), 10);
         if (p && p > totalPages) totalPages = p;
-        if (p === currentPage + 1 || text.includes('selanjutnya')) {
+        if (p === currentPage + 1 || text.includes('selanjutnya') || text.includes('next')) {
           hasNextPage = true;
         }
       } catch {
-        // Abaikan URL tidak valid
+        // Ignore invalid URLs
       }
     });
 
@@ -536,7 +536,7 @@ class SokujaId {
   }
 
   /**
-   * 1. Homepage Data (Featured Slider, Update Terbaru, Ongoing, Completed, Populer Mingguan/Bulanan/Sepanjang Masa)
+   * 1. Homepage Data (Featured Slider, Latest Updates, Ongoing, Completed, Popular Weekly/Monthly/All-Time)
    */
   async getHome(options = {}) {
     const page = Math.max(1, parseInt(options.page, 10) || 1);
@@ -682,7 +682,7 @@ class SokujaId {
   async search(query, options = {}) {
     const q = String(query || '').trim();
     if (!q) {
-      throw new ScraperError('Parameter query pencarian (q) wajib diisi.', 400);
+      throw new ScraperError('Search query parameter (q) is required.', 400);
     }
 
     const page = Math.max(1, parseInt(options.page, 10) || 1);
@@ -723,7 +723,7 @@ class SokujaId {
       const status = String(options.status).toLowerCase().trim();
       if (!VALID_STATUSES.has(status)) {
         throw new ScraperError(
-          `Status "${status}" tidak valid. Pilihan: ${Array.from(VALID_STATUSES).join(', ')}`,
+          `Invalid status "${status}". Allowed values: ${Array.from(VALID_STATUSES).join(', ')}`,
           400
         );
       }
@@ -734,7 +734,7 @@ class SokujaId {
       const type = String(options.type).toLowerCase().trim();
       if (!VALID_TYPES.has(type)) {
         throw new ScraperError(
-          `Tipe "${type}" tidak valid. Pilihan: ${Array.from(VALID_TYPES).join(', ')}`,
+          `Invalid type "${type}". Allowed values: ${Array.from(VALID_TYPES).join(', ')}`,
           400
         );
       }
@@ -745,7 +745,7 @@ class SokujaId {
       const sub = String(options.sub).toLowerCase().trim();
       if (!VALID_SUBS.has(sub)) {
         throw new ScraperError(
-          `Filter subtitle "${sub}" tidak valid. Pilihan: ${Array.from(VALID_SUBS).join(', ')}`,
+          `Invalid subtitle filter "${sub}". Allowed values: ${Array.from(VALID_SUBS).join(', ')}`,
           400
         );
       }
@@ -755,7 +755,7 @@ class SokujaId {
     const order = options.order ? String(options.order).toLowerCase().trim() : 'update';
     if (!VALID_ORDERS.has(order)) {
       throw new ScraperError(
-        `Urutan "${order}" tidak valid. Pilihan: ${Array.from(VALID_ORDERS).join(', ')}`,
+        `Invalid order "${order}". Allowed values: ${Array.from(VALID_ORDERS).join(', ')}`,
         400
       );
     }
@@ -878,7 +878,7 @@ class SokujaId {
       browseOpts.order = 'score';
     } else {
       throw new ScraperError(
-        `Tipe top anime "${rawType}" tidak valid. Pilihan: popular, score, weekly, monthly, alltime, ongoing, upcoming, tv, movie, ova, ona, special`,
+        `Invalid top anime type "${rawType}". Allowed values: popular, score, weekly, monthly, alltime, ongoing, upcoming, tv, movie, ova, ona, special`,
         400
       );
     }
@@ -1040,14 +1040,14 @@ class SokujaId {
   async _fetchTaxonomyListing(prefix, rawSlug, labelName, options = {}) {
     const slug = extractSlug(rawSlug, prefix);
     if (!slug) {
-      throw new ScraperError(`Slug ${labelName} wajib diisi (contoh: "${prefix === 'genre' ? 'action' : prefix}").`, 400);
+      throw new ScraperError(`${labelName} slug is required (e.g. "${prefix === 'genre' ? 'action' : prefix}").`, 400);
     }
 
     const page = Math.max(1, parseInt(options.page, 10) || 1);
     const order = options.order ? String(options.order).toLowerCase().trim() : 'update';
     if (!VALID_ORDERS.has(order)) {
       throw new ScraperError(
-        `Urutan "${order}" tidak valid. Pilihan: ${Array.from(VALID_ORDERS).join(', ')}`,
+        `Invalid order "${order}". Allowed values: ${Array.from(VALID_ORDERS).join(', ')}`,
         400
       );
     }
@@ -1122,7 +1122,7 @@ class SokujaId {
             }
           }
         } catch {
-          // Fallback jika gagal parse
+          // Fallback if parsing fails
         }
       }
     }
@@ -1150,11 +1150,11 @@ class SokujaId {
       }
     }
 
-    // Jika dipanggil tanpa parameter (default musim terbaru dari daftar season)
+    // If called without parameters (defaults to latest season from seasons list)
     if (!seasonSlug) {
       const seasons = await this.getSeasons();
       if (!seasons.length) {
-        throw new ScraperError('Slug musim (contoh: "winter-2026") wajib diisi.', 400);
+        throw new ScraperError('Season slug is required (e.g. "winter-2026").', 400);
       }
       seasonSlug = seasons[0].slug;
     }
@@ -1199,7 +1199,7 @@ class SokujaId {
   }
 
   /**
-   * Alias untuk kompatibilitas interface `AnimaScraper.getAnimeByProducer`
+   * Alias for compatibility with AnimaScraper.getAnimeByProducer interface
    */
   async getAnimeByProducer(studioSlug, options = {}) {
     return this.getAnimeByStudio(studioSlug, options);
@@ -1226,7 +1226,7 @@ class SokujaId {
     const cleanSlug = extractSlug(rawSlug, 'anime');
     if (!cleanSlug) {
       throw new ScraperError(
-        'Slug anime wajib diisi (contoh: "sousou-no-frieren-subtitle-indonesia" atau "/anime/sousou-no-frieren-season-2-subtitle-indonesia/").',
+        'Anime slug is required (e.g. "sousou-no-frieren-subtitle-indonesia" or "/anime/sousou-no-frieren-season-2-subtitle-indonesia/").',
         400
       );
     }
@@ -1280,13 +1280,13 @@ class SokujaId {
   async getAnimeEpisode(idOrSlug, episodeNumber) {
     const epNum = parseFloat(episodeNumber);
     if (Number.isNaN(epNum) || epNum <= 0) {
-      throw new ScraperError('Nomor episode harus berupa angka positif (contoh: 1, 28).', 400);
+      throw new ScraperError('Episode number must be a positive number (e.g. 1, 28).', 400);
     }
 
     const animeDetail = await this.getAnimeDetail(idOrSlug);
     let targetEp = animeDetail.episodeList.find((ep) => ep.number === epNum);
 
-    // Fallback untuk Movie yang memiliki 1 entri episode tanpa nomor eksplisit di judul
+    // Fallback for Movies with a single episode entry without an explicit episode number in title
     if (!targetEp && epNum === 1 && animeDetail.episodeList.length === 1) {
       targetEp = animeDetail.episodeList[0];
     }
@@ -1296,7 +1296,7 @@ class SokujaId {
         ? `MAL ID: ${animeDetail.malId}, Sokuja: ${animeDetail.slug}`
         : `Sokuja: ${animeDetail.slug}`;
       throw new ScraperError(
-        `Episode ${episodeNumber} tidak ditemukan untuk anime "${animeDetail.title}" (${idLabel}).`,
+        `Episode ${episodeNumber} not found for anime "${animeDetail.title}" (${idLabel}).`,
         404
       );
     }
@@ -1315,12 +1315,12 @@ class SokujaId {
   }
 
   /**
-   * Alias khusus MyAnimeList Numeric ID + Episode Number
+   * Dedicated alias for MyAnimeList Numeric ID + Episode Number
    * e.g. `getEpisodeByMalId(52991, 28)` -> Episode 28 streaming mirrors & downloads
    */
   async getEpisodeByMalId(malId, episodeNumber) {
     if (!isNumericMalId(malId)) {
-      throw new ScraperError('MyAnimeList ID harus berupa angka positif (contoh: 52991).', 400);
+      throw new ScraperError('MyAnimeList ID must be a positive integer (e.g. 52991).', 400);
     }
     return this.getAnimeEpisode(malId, episodeNumber);
   }
@@ -1357,7 +1357,7 @@ class SokujaId {
           .filter(Boolean)
       : [];
 
-    // Banner / Backdrop & Poster (filter `.children('div')` karena ada `<script>` JSON-LD di awal wrapper)
+    // Banner / Backdrop & Poster (filter `.children('div')` because JSON-LD <script> is at start of wrapper)
     const topWrapperDivs = main.children('div').first().children('div');
     const bannerSection = topWrapperDivs.eq(0);
     const bannerImg = bannerSection.find('img').first();
@@ -1427,7 +1427,7 @@ class SokujaId {
       }
     });
 
-    // Informasi Anime (<dl> <dt> / <dd>)
+    // Anime Information (<dl> <dt> / <dd>)
     let status = null;
     let type = null;
     let year = null;
@@ -1532,7 +1532,7 @@ class SokujaId {
         }
       });
 
-      // Ubah <br> menjadi baris baru agar paragraf sinopsis tetap rapi
+      // Convert <br> to newlines to keep synopsis paragraphs formatted
       const proseClone = synopsisProse.clone();
       proseClone.find('br').replaceWith('\n');
       synopsis =
@@ -1545,9 +1545,14 @@ class SokujaId {
           .trim() || null;
     }
 
-    // Galeri (Screenshots)
+    // Gallery (Screenshots)
     const gallery = [];
-    const galleryH2 = main.find('h2').filter((_, h) => $(h).text().trim().toLowerCase() === 'galeri');
+    const galleryH2 = main
+      .find('h2')
+      .filter((_, h) => {
+        const text = $(h).text().trim().toLowerCase();
+        return text === 'galeri' || text === 'gallery';
+      });
     if (galleryH2.length) {
       galleryH2
         .parent()
@@ -1558,9 +1563,14 @@ class SokujaId {
         });
     }
 
-    // Pemeran (Voice Actors / Casts)
+    // Voice Actors / Casts
     const casts = [];
-    const castH2 = main.find('h2').filter((_, h) => $(h).text().trim().toLowerCase() === 'pemeran');
+    const castH2 = main
+      .find('h2')
+      .filter((_, h) => {
+        const text = $(h).text().trim().toLowerCase();
+        return text === 'pemeran' || text === 'cast' || text === 'casts';
+      });
     if (castH2.length) {
       castH2
         .parent()
@@ -1579,12 +1589,15 @@ class SokujaId {
         });
     }
 
-    // Daftar Episode (Gabungkan DOM + RSC EpisodeList agar seri panjang >50 episode tetap lengkap 100%)
+    // Episode List (Combine DOM + RSC EpisodeList to ensure long series >50 episodes remain 100% complete)
     const domEpisodeMap = new Map();
     const domEpisodes = [];
     const epH2 = main
       .find('h2')
-      .filter((_, h) => $(h).text().toLowerCase().includes('daftar episode'))
+      .filter((_, h) => {
+        const text = $(h).text().toLowerCase();
+        return text.includes('daftar episode') || text.includes('episode list') || text.includes('episodes');
+      })
       .first();
 
     if (epH2.length) {
@@ -1647,16 +1660,19 @@ class SokujaId {
             });
           }
         } catch {
-          // Gunakan hasil DOM apabila gagal mem-parse JSON RSC
+          // Fall back to DOM results if parsing RSC JSON fails
         }
       }
     }
 
-    // Anime Terkait (Recommendations)
+    // Related Anime (Recommendations)
     const recommendations = [];
     const relatedH2 = main
       .find('h2')
-      .filter((_, h) => $(h).text().trim().toLowerCase().includes('anime terkait'))
+      .filter((_, h) => {
+        const text = $(h).text().trim().toLowerCase();
+        return text.includes('anime terkait') || text.includes('related anime') || text.includes('recommendations');
+      })
       .first();
     if (relatedH2.length) {
       relatedH2
@@ -1709,7 +1725,7 @@ class SokujaId {
   }
 
   /**
-   * Alias untuk kompatibilitas interface `AnimaScraper.getAnimeById`
+   * Alias for compatibility with AnimaScraper.getAnimeById interface
    */
   async getAnimeById(slug) {
     return this.getAnimeDetail(slug);
@@ -1753,7 +1769,7 @@ class SokujaId {
   }
 
   /**
-   * 18. Anime Characters / Casts by Anime Slug or MAL ID (Kompatibilitas `AnimaScraper.getAnimeCharacters`)
+   * 18. Anime Characters / Casts by Anime Slug or MAL ID (AnimaScraper.getAnimeCharacters compatibility)
    */
   async getAnimeCharacters(slug) {
     const detail = await this.getAnimeDetail(slug);
@@ -1802,7 +1818,7 @@ class SokujaId {
     const slug = extractSlug(rawEpisodeSlug);
     if (!slug || slug === 'anime') {
       throw new ScraperError(
-        'Slug episode wajib diisi (contoh: "end-sousou-no-frieren-episode-28-subtitle-indonesia").',
+        'Episode slug is required (e.g. "end-sousou-no-frieren-episode-28-subtitle-indonesia").',
         400
       );
     }
@@ -1818,7 +1834,7 @@ class SokujaId {
     const fullTitle = main.find('h1').first().text().replace(/\s+/g, ' ').trim() || null;
     const title = cleanAnimeTitle(fullTitle) || episodeLd?.name || null;
 
-    // Metadata baris atas (Subtitle badge, tanggal rilis, jumlah views)
+    // Top metadata row (Subtitle badge, release date, views count)
     const metaDiv = main.find('h1').first().next('div');
     const metaSpans = metaDiv.find('> span');
     const subtitle = metaSpans.eq(0).text().trim() || null;
@@ -1841,7 +1857,7 @@ class SokujaId {
         const parsedPoster = JSON.parse(epIdMatch[1]);
         if (parsedPoster) posterUrl = toAbsoluteUrl(parsedPoster, this.baseUrl);
       } catch {
-        // Lewati jika gagal parse poster
+        // Skip if poster parsing fails
       }
       episodeId = parseInt(epIdMatch[2], 10);
       try {
@@ -1886,7 +1902,7 @@ class SokujaId {
                 }
               }
             } catch {
-              // Abaikan jika bukan URL valid
+              // Ignore if not a valid URL
             }
           }
 
@@ -1900,11 +1916,11 @@ class SokujaId {
           };
         });
       } catch {
-        // Tetap kembalikan data episode meskipun endpoint mirror gagal diakses
+        // Return episode data even if mirror endpoint fails to load
       }
     }
 
-    // Navigation (Prev / Semua Episode / Next)
+    // Navigation (Prev / All Episodes / Next)
     let prevEpisode = null;
     let nextEpisode = null;
     let animeSlug = null;
@@ -1912,7 +1928,10 @@ class SokujaId {
 
     const allEpAnchor = main
       .find('a')
-      .filter((_, a) => $(a).text().trim().toLowerCase() === 'semua episode')
+      .filter((_, a) => {
+        const text = $(a).text().trim().toLowerCase();
+        return text === 'semua episode' || text === 'all episodes';
+      })
       .first();
 
     if (allEpAnchor.length) {
@@ -1976,11 +1995,14 @@ class SokujaId {
         });
     }
 
-    // Episode Lainnya
+    // Other Episodes
     const otherEpisodes = [];
     const otherEpH2 = main
       .find('h2')
-      .filter((_, h) => $(h).text().trim().toLowerCase() === 'episode lainnya')
+      .filter((_, h) => {
+        const text = $(h).text().trim().toLowerCase();
+        return text === 'episode lainnya' || text === 'other episodes';
+      })
       .first();
 
     if (otherEpH2.length) {
@@ -2009,11 +2031,14 @@ class SokujaId {
         });
     }
 
-    // Informasi Series (Parent Anime Metadata)
+    // Series Information (Parent Anime Metadata)
     let anime = null;
     const seriesH2 = main
       .find('h2')
-      .filter((_, h) => $(h).text().trim().toLowerCase() === 'informasi series')
+      .filter((_, h) => {
+        const text = $(h).text().trim().toLowerCase();
+        return text === 'informasi series' || text === 'series information';
+      })
       .first();
 
     if (seriesH2.length) {
@@ -2043,7 +2068,10 @@ class SokujaId {
       });
 
       const seriesSynopsis =
-        seriesCard.find('h3').filter((_, h) => $(h).text().toLowerCase().includes('sinopsis')).next().text().trim() ||
+        seriesCard.find('h3').filter((_, h) => {
+          const text = $(h).text().toLowerCase();
+          return text.includes('sinopsis') || text.includes('synopsis');
+        }).next().text().trim() ||
         episodeLd?.description ||
         null;
 

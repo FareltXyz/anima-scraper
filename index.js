@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ==========================================
-// Middleware Bawaan & Parsing Request Body
+// Built-in Middleware & Request Body Parsing
 // ==========================================
 app.use(express.json()); // Parsing application/json
 app.use(express.urlencoded({ extended: true })); // Parsing application/x-www-form-urlencoded
@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 });
 
 // ==========================================
-// CORS Sederhana (Opsional jika diakses frontend)
+// Simple CORS (Optional if accessed by frontend)
 // ==========================================
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -61,7 +61,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Info Endpoint API
+// API Info Endpoint
 app.get('/api/v1/info', (req, res) => {
   res.json({
     project: 'anima-scraper',
@@ -99,15 +99,15 @@ app.use((err, req, res, next) => {
 
 if (require.main === module) {
   const server = app.listen(PORT, () => {
-    console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
     console.log(`👉 Mode: ${process.env.NODE_ENV || 'development'}`);
   });
 
   // Graceful Shutdown
   const handleShutdown = (signal) => {
-    console.log(`\n${signal} diterima. Menutup server dengan aman...`);
+    console.log(`\n${signal} received. Shutting down gracefully...`);
     server.close(() => {
-      console.log('Server ditutup.');
+      console.log('Server closed.');
       process.exit(0);
     });
   };

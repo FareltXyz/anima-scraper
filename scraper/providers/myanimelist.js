@@ -109,13 +109,13 @@ class MyAnimeList {
     const response = await fetch(url, { headers: DEFAULT_HEADERS });
 
     if (response.status === 404) {
-      throw new ScraperError(`Resource tidak ditemukan di MyAnimeList (${url})`, 404);
+      throw new ScraperError(`Resource not found on MyAnimeList (${url})`, 404);
     }
     if (response.status === 429 || response.status === 405) {
-      throw new ScraperError('Terlalu banyak request ke MyAnimeList (rate limited). Coba lagi beberapa saat.', 429);
+      throw new ScraperError('Too many requests to MyAnimeList (rate limited). Please try again later.', 429);
     }
     if (!response.ok) {
-      throw new ScraperError(`Gagal mengambil halaman MyAnimeList (HTTP ${response.status})`, 502);
+      throw new ScraperError(`Failed to fetch MyAnimeList page (HTTP ${response.status})`, 502);
     }
 
     const html = await response.text();
@@ -132,7 +132,7 @@ class MyAnimeList {
   async _fetchJson(url) {
     const response = await fetch(url, { headers: DEFAULT_HEADERS });
     if (!response.ok) {
-      throw new ScraperError(`Gagal mengambil data JSON MyAnimeList (HTTP ${response.status})`, 502);
+      throw new ScraperError(`Failed to fetch MyAnimeList JSON data (HTTP ${response.status})`, 502);
     }
     return response.json();
   }
@@ -244,7 +244,7 @@ class MyAnimeList {
           }
         }
       } catch {
-        // Fallback jika JSON di atribut data-raw gagal diparse
+        // Fallback if JSON in data-raw attribute fails to parse
       }
     }
 
@@ -275,12 +275,12 @@ class MyAnimeList {
   async search(query, options = {}) {
     const q = String(query || '').trim();
     if (!q) {
-      throw new ScraperError('Parameter query pencarian (q) wajib diisi.', 400);
+      throw new ScraperError('Search query parameter (q) is required.', 400);
     }
 
     const page = Math.max(1, parseInt(options.page, 10) || 1);
 
-    // MyAnimeList HTML search membutuhkan minimal 3 karakter; gunakan prefix JSON untuk query pendek
+    // MyAnimeList HTML search requires at least 3 characters; use prefix JSON for short queries
     if (q.length < 3) {
       const prefixUrl = `${this.baseUrl}/search/prefix.json?type=anime&keyword=${encodeURIComponent(q)}&v=1`;
       const json = await this._fetchJson(prefixUrl);
@@ -369,7 +369,7 @@ class MyAnimeList {
     const type = String(options.type || 'all').toLowerCase().trim();
     if (!VALID_TOP_TYPES.has(type)) {
       throw new ScraperError(
-        `Tipe ranking "${type}" tidak valid. Pilihan: ${Array.from(VALID_TOP_TYPES).join(', ')}`,
+        `Invalid ranking type "${type}". Allowed values: ${Array.from(VALID_TOP_TYPES).join(', ')}`,
         400
       );
     }
@@ -449,11 +449,11 @@ class MyAnimeList {
       const parsedYear = parseInt(year, 10);
       const normalizedSeason = String(season || '').toLowerCase().trim();
       if (!parsedYear || parsedYear < 1917 || parsedYear > 2100) {
-        throw new ScraperError('Parameter year tidak valid (contoh: 2026).', 400);
+        throw new ScraperError('Invalid year parameter (e.g. 2026).', 400);
       }
       if (!VALID_SEASONS.has(normalizedSeason)) {
         throw new ScraperError(
-          `Parameter season tidak valid. Pilihan: ${Array.from(VALID_SEASONS).join(', ')}`,
+          `Invalid season parameter. Allowed values: ${Array.from(VALID_SEASONS).join(', ')}`,
           400
         );
       }
@@ -547,7 +547,7 @@ class MyAnimeList {
   async getAnimeById(id) {
     const animeId = parseInt(id, 10);
     if (!animeId || animeId <= 0) {
-      throw new ScraperError('ID anime harus berupa angka positif.', 400);
+      throw new ScraperError('Anime ID must be a positive integer.', 400);
     }
 
     const url = `${this.baseUrl}/anime/${animeId}`;
@@ -964,7 +964,7 @@ class MyAnimeList {
   async getAnimeEpisodes(id, options = {}) {
     const animeId = parseInt(id, 10);
     if (!animeId || animeId <= 0) {
-      throw new ScraperError('ID anime harus berupa angka positif.', 400);
+      throw new ScraperError('Anime ID must be a positive integer.', 400);
     }
 
     const page = Math.max(1, parseInt(options.page, 10) || 1);
@@ -1033,7 +1033,7 @@ class MyAnimeList {
   async getAnimeCharacters(id) {
     const animeId = parseInt(id, 10);
     if (!animeId || animeId <= 0) {
-      throw new ScraperError('ID anime harus berupa angka positif.', 400);
+      throw new ScraperError('Anime ID must be a positive integer.', 400);
     }
 
     const url = `${this.baseUrl}/anime/${animeId}/_/characters`;
@@ -1132,7 +1132,7 @@ class MyAnimeList {
   async getAnimeRecommendations(id) {
     const animeId = parseInt(id, 10);
     if (!animeId || animeId <= 0) {
-      throw new ScraperError('ID anime harus berupa angka positif.', 400);
+      throw new ScraperError('Anime ID must be a positive integer.', 400);
     }
 
     const url = `${this.baseUrl}/anime/${animeId}/_/userrecs`;
@@ -1240,7 +1240,7 @@ class MyAnimeList {
   async getAnimeByGenre(genreId, options = {}) {
     const id = parseInt(genreId, 10);
     if (!id || id <= 0) {
-      throw new ScraperError('ID genre harus berupa angka positif.', 400);
+      throw new ScraperError('Genre ID must be a positive integer.', 400);
     }
 
     const page = Math.max(1, parseInt(options.page, 10) || 1);
@@ -1281,7 +1281,7 @@ class MyAnimeList {
   async getAnimeByProducer(producerId, options = {}) {
     const id = parseInt(producerId, 10);
     if (!id || id <= 0) {
-      throw new ScraperError('ID studio/producer harus berupa angka positif.', 400);
+      throw new ScraperError('Studio/producer ID must be a positive integer.', 400);
     }
 
     const page = Math.max(1, parseInt(options.page, 10) || 1);

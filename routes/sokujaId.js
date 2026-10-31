@@ -4,7 +4,7 @@ const { AnimaScraper } = require('../scraper');
 const router = express.Router();
 const sokujaScraper = new AnimaScraper({ provider: 'sokujaId' });
 
-// Index / Dokumentasi Endpoint SokujaId
+// Index / Endpoint Documentation for SokujaId
 router.get('/', (req, res) => {
   const basePath = req.baseUrl || '/api/v1/sokujaId';
   res.json({
@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
     provider: 'sokujaId',
     message: 'Sokuja Indonesia Scraper REST API (Supports MyAnimeList ID Linking & Sokuja Slugs)',
     endpoints: {
-      // Akses langsung menggunakan MyAnimeList Numeric ID
+      // Direct access using MyAnimeList Numeric ID
       animeByMalIdSeason1: `${basePath}/52991`,
       animeByMalIdSeason2: `${basePath}/59978`,
       episodesByMalId: `${basePath}/52991/episodes?page=1&order=asc`,
@@ -21,14 +21,14 @@ router.get('/', (req, res) => {
       recommendationsByMalId: `${basePath}/52991/recommendations`,
       resolveMalId: `${basePath}/resolve/52991`,
 
-      // Akses menggunakan Sokuja Slug
+      // Access using Sokuja Slug
       animeBySlugSeason1: `${basePath}/anime/sousou-no-frieren-subtitle-indonesia`,
       animeBySlugSeason2: `${basePath}/anime/sousou-no-frieren-season-2-subtitle-indonesia`,
       episodesBySlug: `${basePath}/anime/sousou-no-frieren-subtitle-indonesia/episodes?page=1`,
       episodeStreamByAnimeSlug: `${basePath}/anime/sousou-no-frieren-subtitle-indonesia/episode/28`,
       episodeStreamByEpisodeSlug: `${basePath}/episode/end-sousou-no-frieren-episode-28-subtitle-indonesia`,
 
-      // Katalog, Pencarian, Jadwal & Taksonomi
+      // Catalog, Search, Schedule & Taxonomy
       home: `${basePath}/home?page=1`,
       latestUpdates: `${basePath}/latest?page=1`,
       search: `${basePath}/search?q=frieren&page=1`,
@@ -38,7 +38,7 @@ router.get('/', (req, res) => {
       movies: `${basePath}/movies?page=1`,
       topAnime: `${basePath}/top?type=score&page=1`,
       animeListAZ: `${basePath}/anime-list?letter=S`,
-      schedule: `${basePath}/schedule?day=jumat`,
+      schedule: `${basePath}/schedule?day=friday`,
       genres: `${basePath}/genres`,
       animeByGenre: `${basePath}/genre/action?page=1&order=score`,
       seasons: `${basePath}/seasons`,
@@ -53,7 +53,7 @@ router.get('/', (req, res) => {
   });
 });
 
-// 1. Homepage (Featured, Update Terbaru, Ongoing, Completed, Populer)
+// 1. Homepage (Featured, Latest Updates, Ongoing, Completed, Popular)
 router.get('/home', async (req, res) => {
   const { page } = req.query;
   const data = await sokujaScraper.getHome({ page });
@@ -374,7 +374,7 @@ router.get('/episode/:slug', async (req, res) => {
 });
 
 // 24. Direct MyAnimeList ID (or Sokuja Slug) Routes at `/api/v1/sokujaId/:id`
-// Contoh: GET /api/v1/sokujaId/52991 -> terhubung otomatis ke sousou-no-frieren-subtitle-indonesia
+// Example: GET /api/v1/sokujaId/52991 -> automatically links to sousou-no-frieren-subtitle-indonesia
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const data = await sokujaScraper.getAnimeDetail(id);
