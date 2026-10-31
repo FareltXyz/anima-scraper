@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnimaScraper Documentation — High-Speed Anime Metadata & Streaming API</title>
+  <meta name="description" content="Official AnimaScraper documentation: setup guide, Node.js SDK reference, REST API for MyAnimeList & SokujaId, and automated MAL ID bridging." />
+  <link rel="icon" type="image/png" href="/logo.png" />
+
+  <!-- Prevent theme flash & set default language -->
+  <script>
+    (function () {
+      try {
+        var savedTheme = localStorage.getItem('anima_theme');
+        if (savedTheme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+        var savedLang = localStorage.getItem('anima_lang');
+        if (savedLang === 'id') {
+          document.documentElement.lang = 'id';
+        } else {
+          document.documentElement.lang = 'en';
+        }
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS Framework -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Tailwind Color Palette -->
+  <script>
+    const animaCustomPalette = {
+      transparent: 'transparent',
+      current: 'currentColor',
+      inherit: 'inherit',
+      pure: {
+        light: '#ffffff',
+        dark: '#020613'
+      },
+      abyss: {
+        50: '#eef4ff',
+        100: '#d9e6ff',
+        200: '#b6cdfc',
+        300: '#87aaf0',
+        400: '#587fd1',
+        500: '#365ba8',
+        600: '#234082',
+        700: '#172e63',
+        800: '#10214a',
+        850: '#0b1838',
+        900: '#071129',
+        950: '#040a1a'
+      },
+      canvas: {
+        50: '#ffffff',
+        100: '#f6f9ff',
+        200: '#ebf1fc',
+        300: '#d7e2f4',
+        400: '#b8cae8'
+      },
+      ember: {
+        50: '#fff6ed',
+        100: '#ffead4',
+        200: '#ffd0a6',
+        300: '#ffad6b',
+        400: '#ff8533',
+        500: '#ff6610',
+        600: '#e84d05',
+        700: '#bf3906',
+        800: '#992e0c',
+        900: '#7c270f',
+        950: '#441005'
+      },
+      terminal: {
+        bg: '#030817',
+        header: '#081430',
+        border: '#193269',
+        mint: '#2dd4bf',
+        sky: '#58a6ff',
+        gold: '#fbbf24',
+        peach: '#ff9e64'
+      }
+    };
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        colors: animaCustomPalette,
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'glow-xs': '0 0 14px -2px rgba(255, 102, 16, 0.35)',
+            'glow-sm': '0 0 24px -4px rgba(255, 102, 16, 0.45)',
+            'glow-md': '0 0 36px -4px rgba(255, 102, 16, 0.58)',
+            'glow-lg': '0 0 56px -6px rgba(255, 102, 16, 0.72)',
+            'card-glow': '0 16px 40px -12px rgba(255, 102, 16, 0.22)',
+            'console-dark': '0 28px 70px -15px rgba(2, 6, 19, 0.9), 0 0 55px -12px rgba(255, 102, 16, 0.28)',
+            'console-light': '0 25px 60px -15px rgba(7, 17, 41, 0.16), 0 0 45px -12px rgba(255, 102, 16, 0.24)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- PrismJS for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+  <!-- Alpine.js Framework -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+  <style>
+    [x-cloak] { display: none !important; }
+
+    .bg-grid-pattern {
+      background-size: 44px 44px;
+      background-image:
+        linear-gradient(to right, rgba(54, 91, 168, 0.09) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(54, 91, 168, 0.09) 1px, transparent 1px);
+    }
+    .dark .bg-grid-pattern {
+      background-image:
+        linear-gradient(to right, rgba(88, 127, 209, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(88, 127, 209, 0.08) 1px, transparent 1px);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(88, 127, 209, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 102, 16, 0.6);
+    }
+
+    pre[class*="language-"] {
+      margin: 0 !important;
+      border-radius: 0.75rem !important;
+      background: #030817 !important;
+      padding: 1rem !important;
+      font-size: 0.825rem !important;
+      line-height: 1.5 !important;
+      border: 1px solid #193269 !important;
+    }
+    code[class*="language-"] {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+  </style>
+</head>
+
+<body
+  x-data="animaDocs()"
+  x-init="init()"
+  class="min-h-screen font-sans antialiased bg-canvas-100 text-abyss-950 dark:bg-abyss-950 dark:text-abyss-50 selection:bg-ember-500 selection:text-pure-light transition-colors duration-300 relative"
+>
+  <!-- Ambient Glow Background -->
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+    <div class="absolute inset-0 bg-grid-pattern [mask-image:radial-gradient(ellipse_80%_70%_at_50%_15%,#000_35%,transparent_100%)]"></div>
+    <div class="absolute -top-32 left-1/4 w-[36rem] h-[36rem] rounded-full bg-ember-500/10 dark:bg-ember-500/15 blur-[140px]"></div>
+    <div class="absolute top-96 -right-24 w-[32rem] h-[32rem] rounded-full bg-abyss-600/15 dark:bg-abyss-600/30 blur-[130px]"></div>
+    <div class="absolute bottom-10 left-1/3 w-[36rem] h-[24rem] rounded-full bg-ember-600/10 dark:bg-ember-600/12 blur-[150px]"></div>
+  </div>
+
+  <!-- Top Navbar -->
+  <header class="sticky top-0 z-50 backdrop-blur-xl bg-canvas-50/85 dark:bg-abyss-950/85 border-b border-canvas-300/80 dark:border-abyss-800/80 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-4">
+      <!-- Left: Logo & Docs Badge -->
+      <div class="flex items-center gap-3">
+        <!-- Mobile Sidebar Toggle -->
+        <button
+          type="button"
+          @click="sidebarOpen = !sidebarOpen"
+          class="lg:hidden p-2 rounded-xl border border-canvas-300 dark:border-abyss-800 text-abyss-700 dark:text-abyss-200 hover:bg-canvas-200 dark:hover:bg-abyss-900 transition-colors"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
+          </svg>
+        </button>
+
+        <a href="/" class="flex items-center gap-2.5 sm:gap-3 group focus:outline-none">
+          <span class="relative flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden border border-ember-500/30 bg-ember-500/10 shadow-glow-xs group-hover:shadow-glow-sm transition-all duration-300">
+            <img src="/logo.png" alt="AnimaScraper Logo" class="w-full h-full object-cover" />
+          </span>
+          <div class="flex items-center gap-2">
+            <span class="font-display text-lg font-bold tracking-tight text-abyss-950 dark:text-abyss-50">
+              Anima<span class="text-ember-500 dark:text-ember-400">Scraper</span>
+            </span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wide uppercase bg-ember-100 text-ember-700 border border-ember-300/80 dark:bg-ember-500/15 dark:text-ember-300 dark:border-ember-500/30">
+              Docs
+            </span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Center: Quick Search Bar -->
+      <div class="hidden md:flex flex-1 max-w-sm lg:max-w-md mx-2">
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-abyss-400 dark:text-abyss-500">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+          </span>
+          <input
+            type="text"
+            x-model="searchQuery"
+            :placeholder="lang === 'en' ? 'Search docs or endpoints (e.g. search, stream, resolve)...' : 'Cari dokumentasi atau endpoint (e.g. search, stream, resolve)...'"
+            class="w-full pl-9 pr-4 py-1.5 rounded-xl text-xs font-medium border bg-canvas-200/60 dark:bg-abyss-900/80 border-canvas-300 dark:border-abyss-700/80 text-abyss-900 dark:text-abyss-100 placeholder-abyss-400 dark:placeholder-abyss-500 focus:outline-none focus:border-ember-500 focus:ring-1 focus:ring-ember-500 transition-all"
+          />
+          <button
+            x-show="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-abyss-400 hover:text-ember-500"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Links, Language Switcher & Theme Toggle -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a
+          href="/"
+          class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-abyss-700 hover:text-ember-600 dark:text-abyss-200 dark:hover:text-ember-400 transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </a>
+
+        <a
+          href="#playground"
+          class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-ember-500/10 text-ember-600 border border-ember-500/30 hover:bg-ember-500/20 dark:text-ember-400 transition-all shadow-glow-xs"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span>Playground</span>
+        </a>
+
+        <!-- LANGUAGE SWITCHER (EN / ID) -->
+        <div class="inline-flex items-center p-0.5 rounded-xl border bg-canvas-200/70 dark:bg-abyss-900 border-canvas-300 dark:border-abyss-700 text-xs font-mono font-semibold transition-all shadow-inner">
+          <button
+            type="button"
+            @click="setLang('en')"
+            :class="lang === 'en' ? 'bg-ember-500 text-pure-light shadow-glow-xs font-bold' : 'text-abyss-600 dark:text-abyss-400 hover:text-ember-500'"
+            class="px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+            aria-label="Switch to English"
+            title="English (Default)"
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            @click="setLang('id')"
+            :class="lang === 'id' ? 'bg-ember-500 text-pure-light shadow-glow-xs font-bold' : 'text-abyss-600 dark:text-abyss-400 hover:text-ember-500'"
+            class="px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+            aria-label="Ganti ke Bahasa Indonesia"
+            title="Bahasa Indonesia"
+          >
+            ID
+          </button>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button
+          type="button"
+          @click="toggleTheme()"
+          class="inline-flex items-center justify-center p-2 rounded-xl text-xs font-semibold border bg-canvas-50 text-abyss-800 border-canvas-300 hover:border-ember-400 dark:bg-abyss-900 dark:text-abyss-100 dark:border-abyss-700 dark:hover:border-ember-500/60 transition-all duration-300 cursor-pointer"
+          :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
+        >
+          <!-- Sun Icon -->
+          <svg x-show="isDark" x-cloak class="w-4 h-4 text-ember-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <!-- Moon Icon -->
+          <svg x-show="!isDark" x-cloak class="w-4 h-4 text-ember-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Layout Container -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8 relative">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div
+      x-show="sidebarOpen"
+      x-cloak
+      @click="sidebarOpen = false"
+      class="fixed inset-0 z-40 bg-abyss-950/70 backdrop-blur-sm lg:hidden transition-opacity"
+    ></div>
+
+    <!-- LEFT SIDEBAR -->
+    <aside
+      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+      class="fixed lg:sticky top-0 lg:top-24 left-0 z-40 lg:z-10 w-72 h-screen lg:h-[calc(100vh-8rem)] bg-canvas-50/95 dark:bg-abyss-950/95 lg:bg-transparent lg:dark:bg-transparent backdrop-blur-xl lg:backdrop-blur-none p-6 lg:p-0 border-r lg:border-r-0 border-canvas-300 dark:border-abyss-800 transition-transform duration-300 overflow-y-auto shrink-0"
+    >
+      <div class="flex items-center justify-between pb-4 lg:hidden border-b border-canvas-300 dark:border-abyss-800 mb-4">
+        <span class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100" x-text="lang === 'en' ? 'Documentation Index' : 'Daftar Isi Dokumentasi'">Documentation Index</span>
+        <button @click="sidebarOpen = false" class="p-1 rounded text-abyss-500 hover:text-ember-500">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <nav class="space-y-6 text-sm">
+        <!-- Group 1: Getting Started -->
+        <div>
+          <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span x-text="lang === 'en' ? 'Getting Started' : 'Getting Started'">Getting Started</span>
+          </h3>
+          <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
+            <li>
+              <a href="#intro" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'intro' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                <span x-show="lang === 'en'">Overview & Architecture</span>
+                <span x-show="lang === 'id'" x-cloak>Pengenalan & Arsitektur</span>
+              </a>
+            </li>
+            <li>
+              <a href="#features" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'features' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                <span x-show="lang === 'en'">Key Features</span>
+                <span x-show="lang === 'id'" x-cloak>Fitur Utama</span>
+              </a>
+            </li>
+            <li>
+              <a href="#setup" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'setup' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                <span x-show="lang === 'en'">Installation & Setup</span>
+                <span x-show="lang === 'id'" x-cloak>Instalasi & Setup</span>
+              </a>
+            </li>
+            <li>
+              <a href="#quickstart" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'quickstart' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                Quickstart (REST & SDK)
+              </a>
+            </li>
+            <li>
+              <a href="#structure" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'structure' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                <span x-show="lang === 'en'">Project Structure</span>
+                <span x-show="lang === 'id'" x-cloak>Struktur Proyek</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Group 2: Node.js SDK -->
+        <div>
+          <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>Node.js SDK</span>
+          </h3>
+          <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
+            <li>
+              <a href="#sdk-usage" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'sdk-usage' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                AnimaScraper Factory
+              </a>
+            </li>
+            <li>
+              <a href="#sdk-classes" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'sdk-classes' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                Direct Provider Classes
+              </a>
+            </li>
+            <li>
+              <a href="#sdk-errors" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors" :class="activeSection === 'sdk-errors' ? 'text-ember-600 dark:text-ember-400 font-bold' : 'text-abyss-700 dark:text-abyss-300'">
+                Error Handling (ScraperError)
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Group 3: MyAnimeList Provider -->
+        <div>
+          <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            MyAnimeList API
+          </h3>
+          <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
+            <li><a href="#mal-search" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Search Anime</span><span x-show="lang === 'id'" x-cloak>Pencarian Anime</span></a></li>
+            <li><a href="#mal-top" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Top & Rankings</span><span x-show="lang === 'id'" x-cloak>Top & Peringkat</span></a></li>
+            <li><a href="#mal-season" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Seasonal Anime</span><span x-show="lang === 'id'" x-cloak>Anime Musiman</span></a></li>
+            <li><a href="#mal-schedule" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Weekly Schedule</span><span x-show="lang === 'id'" x-cloak>Jadwal Mingguan</span></a></li>
+            <li><a href="#mal-detail" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Detail Anime by ID</span><span x-show="lang === 'id'" x-cloak>Detail Anime per ID</span></a></li>
+            <li><a href="#mal-episodes" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Episodes List</span><span x-show="lang === 'id'" x-cloak>Daftar Episode</span></a></li>
+            <li><a href="#mal-characters" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Characters & Staff</span><span x-show="lang === 'id'" x-cloak>Karakter & Seiyuu</span></a></li>
+            <li><a href="#mal-recommendations" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Recommendations</span><span x-show="lang === 'id'" x-cloak>Rekomendasi Komunitas</span></a></li>
+            <li><a href="#mal-genres" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Genres & Studios</span><span x-show="lang === 'id'" x-cloak>Genre & Studio</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Group 4: SokujaId Provider -->
+        <div>
+          <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Sokuja ID (Streaming & Sub Indo)
+          </h3>
+          <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
+            <li><a href="#sokuja-dual-mode" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors">Dual-Mode (MAL ID & Slugs)</a></li>
+            <li><a href="#sokuja-home" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Home Feed</span><span x-show="lang === 'id'" x-cloak>Beranda Utama</span></a></li>
+            <li><a href="#sokuja-latest" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Latest Updates</span><span x-show="lang === 'id'" x-cloak>Update Episode Terbaru</span></a></li>
+            <li><a href="#sokuja-search" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Search & Browse Directory</span><span x-show="lang === 'id'" x-cloak>Pencarian & Filter Direktori</span></a></li>
+            <li><a href="#sokuja-detail" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Detail Anime & Episodes</span><span x-show="lang === 'id'" x-cloak>Detail Anime & Episode</span></a></li>
+            <li><a href="#sokuja-stream" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Streaming Video & Download</span><span x-show="lang === 'id'" x-cloak>Streaming Video & Unduhan</span></a></li>
+            <li><a href="#sokuja-schedule" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Release Schedule & Taxonomies</span><span x-show="lang === 'id'" x-cloak>Jadwal Rilis & Taksonomi</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Group 5: MAL-to-Sokuja Linker -->
+        <div>
+          <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            MAL-to-Sokuja Bridge
+          </h3>
+          <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
+            <li><a href="#mal-linker" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Smart Matching Algorithm</span><span x-show="lang === 'id'" x-cloak>Algoritma Smart Matching</span></a></li>
+            <li><a href="#mal-resolve" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Resolve MAL ID Endpoint</span><span x-show="lang === 'id'" x-cloak>Endpoint Resolve MAL ID</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Group 6: Live Playground -->
+        <div>
+          <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span x-show="lang === 'en'">Live Testing</span>
+            <span x-show="lang === 'id'" x-cloak>Pengujian Langsung</span>
+          </h3>
+          <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
+            <li><a href="#playground" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors font-semibold text-ember-600 dark:text-ember-400">Interactive API Playground</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 min-w-0 max-w-4xl space-y-16 pb-24">
+
+      <!-- Breadcrumbs & Hero Title -->
+      <div>
+        <nav class="flex items-center gap-2 text-xs font-mono text-abyss-500 dark:text-abyss-400 mb-3" aria-label="Breadcrumb">
+          <a href="/" class="hover:text-ember-500 transition-colors">Home</a>
+          <span>/</span>
+          <span class="text-ember-600 dark:text-ember-400 font-semibold" x-text="lang === 'en' ? 'Documentation' : 'Dokumentasi'">Documentation</span>
+          <span>/</span>
+          <span>v1.0.0</span>
+        </nav>
+        <h1 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-abyss-950 dark:text-abyss-50">
+          Anima<span class="text-ember-500 dark:text-ember-400">Scraper</span> <span x-text="lang === 'en' ? 'Documentation' : 'Dokumentasi'">Documentation</span>
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-abyss-600 dark:text-abyss-300 leading-relaxed">
+          <span x-show="lang === 'en'">
+            Official developer documentation for AnimaScraper: high-speed anime metadata and video streaming aggregator. Featuring complete <strong class="text-ember-500">MyAnimeList</strong> global metadata, <strong class="text-ember-500">Sokuja ID</strong> Indonesian subtitled video streams & direct downloads, plus automated bridging via MyAnimeList Numeric IDs.
+          </span>
+          <span x-show="lang === 'id'" x-cloak>
+            Dokumentasi resmi untuk Node.js library dan REST API service anime scraper berkecepatan tinggi. Mendukung metadata lengkap dari <strong class="text-ember-500">MyAnimeList</strong>, streaming video multi-server & unduhan Subtitle Indonesia dari <strong class="text-ember-500">Sokuja ID</strong>, serta bridging otomatis menggunakan MyAnimeList Numeric ID.
+          </span>
+        </p>
+
+        <!-- Quick Jump Pills -->
+        <div class="mt-6 flex flex-wrap gap-2.5">
+          <a href="#setup" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-200 text-abyss-800 dark:bg-abyss-900 dark:text-abyss-200 border border-canvas-300 dark:border-abyss-700 hover:border-ember-500 transition-all">
+            <svg class="w-3.5 h-3.5 text-ember-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            <span x-show="lang === 'en'">Quick Setup</span>
+            <span x-show="lang === 'id'" x-cloak>Setup Cepat</span>
+          </a>
+          <a href="#sdk-usage" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-200 text-abyss-800 dark:bg-abyss-900 dark:text-abyss-200 border border-canvas-300 dark:border-abyss-700 hover:border-ember-500 transition-all">
+            <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>Node.js SDK</span>
+          </a>
+          <a href="#sokuja-dual-mode" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-200 text-abyss-800 dark:bg-abyss-900 dark:text-abyss-200 border border-canvas-300 dark:border-abyss-700 hover:border-ember-500 transition-all">
+            <svg class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>MAL ID Bridging</span>
+          </a>
+          <a href="#playground" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-ember-500/15 text-ember-600 dark:text-ember-300 border border-ember-500/30 hover:border-ember-500 transition-all shadow-glow-xs">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Live Playground</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 1: OVERVIEW & ARCHITECTURE -->
+      <!-- ======================================================== -->
+      <section id="intro" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">1</span>
+            <span x-show="lang === 'en'">Overview & Architecture</span>
+            <span x-show="lang === 'id'" x-cloak>Pengenalan & Arsitektur</span>
+          </h2>
+        </div>
+
+        <p class="text-sm sm:text-base text-abyss-700 dark:text-abyss-300 leading-relaxed">
+          <span x-show="lang === 'en'">
+            <strong>AnimaScraper</strong> is engineered as a modern anime scraping solution that blends the performance of a native Node.js library with the simplicity of an out-of-the-box Express.js REST API. It bridges global English anime metadata from MyAnimeList and Indonesian fansub streaming portals (Sokuja ID) seamlessly without external API keys.
+          </span>
+          <span x-show="lang === 'id'" x-cloak>
+            <strong>AnimaScraper</strong> dirancang sebagai solusi scraper modern yang menggabungkan fleksibilitas library lokal Node.js dan kehandalan REST API siap pakai (Express.js). Layanan ini memecahkan masalah integrasi data anime antara sumber global berbahasa Inggris (MyAnimeList) dan portal streaming lokal Indonesia (Sokuja ID) secara transparan tanpa perlu mendaftar API key pihak ketiga.
+          </span>
+        </p>
+
+        <!-- Architecture Diagram -->
+        <div class="p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg shadow-sm">
+          <div class="text-xs font-mono uppercase tracking-wider text-abyss-400 dark:text-abyss-400 mb-3 flex items-center justify-between">
+            <span x-text="lang === 'en' ? 'Core Architecture Pipeline' : 'Pipeline Arsitektur Utama'">Core Architecture Pipeline</span>
+            <span class="text-ember-500">Node.js + Cheerio Engine</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-center text-xs font-mono">
+            <div class="p-3.5 rounded-xl border border-canvas-300 dark:border-terminal-border bg-canvas-200/50 dark:bg-terminal-header">
+              <span class="text-blue-500 font-bold block mb-1">MyAnimeList Provider</span>
+              <p class="text-abyss-600 dark:text-abyss-400 text-[11px]">
+                <span x-show="lang === 'en'">Worldwide anime database: scores, synopsis, characters, voice actors, schedules, and studios.</span>
+                <span x-show="lang === 'id'" x-cloak>Database anime dunia: skor, sinopsis, karakter, seiyuu, jadwal & studio animasi.</span>
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl border border-ember-500/40 bg-ember-500/5 dark:bg-ember-500/10 relative">
+              <span class="text-ember-500 font-bold block mb-1">MalSokujaLinker</span>
+              <p class="text-abyss-600 dark:text-abyss-400 text-[11px]">
+                <span x-show="lang === 'en'">Heuristic title normalization, Roman numeral detection & fuzzy cross-matching bridge.</span>
+                <span x-show="lang === 'id'" x-cloak>Normalisasi judul heuristik, deteksi angka romawi & penghubung fuzzy cross-matching.</span>
+              </p>
+              <div class="hidden md:block absolute -left-2 top-1/2 -translate-y-1/2 text-ember-500">↔</div>
+              <div class="hidden md:block absolute -right-2 top-1/2 -translate-y-1/2 text-ember-500">↔</div>
+            </div>
+            <div class="p-3.5 rounded-xl border border-canvas-300 dark:border-terminal-border bg-canvas-200/50 dark:bg-terminal-header">
+              <span class="text-emerald-500 font-bold block mb-1">Sokuja ID Provider</span>
+              <p class="text-abyss-600 dark:text-abyss-400 text-[11px]">
+                <span x-show="lang === 'en'">Multi-server video embed streaming & direct download links grouped by resolution (360p - 1080p).</span>
+                <span x-show="lang === 'id'" x-cloak>Streaming embed video multi-mirror & tautan unduhan langsung per resolusi (360p - 1080p).</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 2: KEY FEATURES -->
+      <!-- ======================================================== -->
+      <section id="features" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">2</span>
+            <span x-show="lang === 'en'">Key Features</span>
+            <span x-show="lang === 'id'" x-cloak>Fitur Utama</span>
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60">
+            <div class="w-8 h-8 rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 flex items-center justify-center mb-3">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100" x-text="lang === 'en' ? 'Dual Interface (REST API & Node.js SDK)' : 'Dual Interface (REST API & Node.js SDK)'">Dual Interface (REST API & Node.js SDK)</h3>
+            <p class="mt-1 text-xs text-abyss-600 dark:text-abyss-400 leading-relaxed">
+              <span x-show="lang === 'en'">Run as a standalone HTTP REST service or directly import JavaScript class modules in your Node.js apps without extra server overhead.</span>
+              <span x-show="lang === 'id'" x-cloak>Jalankan sebagai standalone HTTP REST server atau import langsung modul class JavaScript di proyek Node.js Anda tanpa overhead server terpisah.</span>
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60">
+            <div class="w-8 h-8 rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 flex items-center justify-center mb-3">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100" x-text="lang === 'en' ? 'Universal MAL ID Linking' : 'Universal MAL ID Linking'">Universal MAL ID Linking</h3>
+            <p class="mt-1 text-xs text-abyss-600 dark:text-abyss-400 leading-relaxed">
+              <span x-show="lang === 'en'">Access Sokuja anime and episode streams directly using numeric MyAnimeList IDs (e.g. <code class="px-1 py-0.5 rounded bg-canvas-200 dark:bg-abyss-800 font-mono text-[11px]">52991</code> for Sousou no Frieren) without knowing long Indonesian slugs.</span>
+              <span x-show="lang === 'id'" x-cloak>Akses streaming dan episode Sokuja langsung memakai MyAnimeList Numeric ID (contoh: <code class="px-1 py-0.5 rounded bg-canvas-200 dark:bg-abyss-800 font-mono text-[11px]">52991</code> untuk Sousou no Frieren) tanpa perlu menghafal slug fansub panjang.</span>
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60">
+            <div class="w-8 h-8 rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 flex items-center justify-center mb-3">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="15" x="2" y="5" rx="2"/><polyline points="8 10 12 13 8 16"/><line x1="12" x2="16" y1="16" y2="16"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100" x-text="lang === 'en' ? 'Streaming Mirrors & Direct Downloads' : 'Streaming Mirrors & Download Direct'">Streaming Mirrors & Direct Downloads</h3>
+            <p class="mt-1 text-xs text-abyss-600 dark:text-abyss-400 leading-relaxed">
+              <span x-show="lang === 'en'">Extract embedded video players (Blogger, Google Drive, StreamSB, Vidhide, Mp4Upload) and direct download mirrors categorized by resolution (360p to 1080p).</span>
+              <span x-show="lang === 'id'" x-cloak>Mengekstrak iframe pemutar video (Blogger, Google Drive, StreamSB, Vidhide, Mp4Upload) serta link unduhan langsung per resolusi (360p hingga 1080p).</span>
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60">
+            <div class="w-8 h-8 rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 flex items-center justify-center mb-3">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100" x-text="lang === 'en' ? 'Resilient Parser & Zero API Key' : 'Resilient Parser & Zero API Key'">Resilient Parser & Zero API Key</h3>
+            <p class="mt-1 text-xs text-abyss-600 dark:text-abyss-400 leading-relaxed">
+              <span x-show="lang === 'en'">No third-party API keys or accounts needed. Equipped with realistic desktop user-agent rotation, timeout guards, and structured JSON normalization.</span>
+              <span x-show="lang === 'id'" x-cloak>Tidak membutuhkan pendaftaran API key pihak ketiga. Dilengkapi rotasi header desktop realistis, guard timeout, dan normalisasi JSON bersih.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 3: SETUP & INSTALLATION -->
+      <!-- ======================================================== -->
+      <section id="setup" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">3</span>
+            <span x-show="lang === 'en'">Installation & Setup</span>
+            <span x-show="lang === 'id'" x-cloak>Instalasi & Setup</span>
+          </h2>
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="font-display font-bold text-base text-abyss-900 dark:text-abyss-100">
+            <span x-show="lang === 'en'">1. System Requirements</span>
+            <span x-show="lang === 'id'" x-cloak>1. Prasyarat Sistem</span>
+          </h3>
+          <ul class="list-disc list-inside text-xs sm:text-sm text-abyss-700 dark:text-abyss-300 space-y-1.5 pl-2">
+            <li><strong>Node.js</strong>: <span x-text="lang === 'en' ? 'Version 18.0.0 or higher (supports native fetch).' : 'Versi 18.0.0 atau yang lebih baru (mendukung native fetch).'"></span></li>
+            <li><strong>npm</strong> (bundled with Node.js) <span x-text="lang === 'en' ? 'or yarn / pnpm.' : 'atau yarn / pnpm.'"></span></li>
+            <li><span x-text="lang === 'en' ? 'Stable internet connection to scrape upstream target websites.' : 'Akses internet stabil untuk melakukan scraping target website.'"></span></li>
+          </ul>
+
+          <h3 class="font-display font-bold text-base text-abyss-900 dark:text-abyss-100 pt-2">
+            <span x-show="lang === 'en'">2. Cloning & Installing Dependencies</span>
+            <span x-show="lang === 'id'" x-cloak>2. Kloning & Menginstal Dependensi</span>
+          </h3>
+          <div class="relative">
+            <pre><code class="language-bash"># Clone repository
+git clone https://github.com/username/anima-scraper.git
+
+# Enter project directory
+cd anima-scraper
+
+# Install dependencies (cheerio & express)
+npm install</code></pre>
+            <button
+              @click="copySnippet('git clone https://github.com/username/anima-scraper.git\ncd anima-scraper\nnpm install', 'setup-clone')"
+              class="absolute top-2 right-2 px-2 py-1 rounded text-[11px] font-mono bg-canvas-200/80 dark:bg-abyss-800 text-abyss-800 dark:text-abyss-200 border border-canvas-300 dark:border-abyss-700 hover:border-ember-500"
+            >
+              <span x-text="copiedId === 'setup-clone' ? (lang === 'en' ? 'Copied!' : 'Tersalin!') : (lang === 'en' ? 'Copy' : 'Salin')">Copy</span>
+            </button>
+          </div>
+
+          <h3 class="font-display font-bold text-base text-abyss-900 dark:text-abyss-100 pt-2">
+            <span x-show="lang === 'en'">3. Starting the REST API Server</span>
+            <span x-show="lang === 'id'" x-cloak>3. Menjalankan Server REST API</span>
+          </h3>
+          <div class="relative">
+            <pre><code class="language-bash"># Development / Standard mode
+npm start
+
+# Or specify custom port:
+PORT=4000 npm start</code></pre>
+          </div>
+
+          <div class="p-4 rounded-xl border border-ember-500/30 bg-ember-500/10 text-xs text-abyss-800 dark:text-abyss-200 flex items-start gap-3">
+            <span class="text-ember-500 mt-0.5 font-bold">INFO:</span>
+            <span>
+              <span x-show="lang === 'en'">The Express server will automatically start at <code class="font-mono text-ember-600 dark:text-ember-400 font-bold">http://localhost:3000</code>. Dashboard is served at root (<code class="font-mono">/</code>) and this documentation at <code class="font-mono">/docs</code>.</span>
+              <span x-show="lang === 'id'" x-cloak>Server Express akan otomatis aktif di <code class="font-mono text-ember-600 dark:text-ember-400 font-bold">http://localhost:3000</code>. Halaman dashboard tersedia di root (<code class="font-mono">/</code>) dan dokumentasi ini di <code class="font-mono">/docs</code>.</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 4: QUICKSTART -->
+      <!-- ======================================================== -->
+      <section id="quickstart" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">4</span>
+            Quickstart Guide
+          </h2>
+        </div>
+
+        <p class="text-xs sm:text-sm text-abyss-700 dark:text-abyss-300">
+          <span x-show="lang === 'en'">Choose how you want to interact with AnimaScraper based on your architecture:</span>
+          <span x-show="lang === 'id'" x-cloak>Pilih cara tercepat menggunakan AnimaScraper sesuai kebutuhan proyek Anda:</span>
+        </p>
+
+        <!-- Quickstart Tabs -->
+        <div class="space-y-4">
+          <!-- Method A: REST API -->
+          <div class="p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-emerald-500 uppercase tracking-wide">
+                <span x-show="lang === 'en'">Option A: Using REST API (cURL / HTTP)</span>
+                <span x-show="lang === 'id'" x-cloak>Cara A: Sebagai REST API (cURL / HTTP)</span>
+              </span>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Universal</span>
+            </div>
+            <pre><code class="language-bash"># 1. Health check
+curl http://localhost:3000/health
+
+# 2. Search anime on MyAnimeList
+curl "http://localhost:3000/api/v1/myanimelist/search?q=frieren&page=1"
+
+# 3. Stream & download episode 1 directly using MAL ID (52991)
+curl http://localhost:3000/api/v1/sokujaId/52991/episode/1</code></pre>
+          </div>
+
+          <!-- Method B: Node.js SDK Library -->
+          <div class="p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-blue-500 uppercase tracking-wide">
+                <span x-show="lang === 'en'">Option B: Using as Node.js Library (In-App)</span>
+                <span x-show="lang === 'id'" x-cloak>Cara B: Sebagai Node.js Library</span>
+              </span>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30">Direct In-App</span>
+            </div>
+            <pre><code class="language-javascript">const { AnimaScraper } = require('./scraper');
+
+async function main() {
+  // Initialize MyAnimeList provider
+  const mal = new AnimaScraper({ provider: 'myanimelist' });
+  const searchResults = await mal.search('Frieren', { page: 1 });
+  console.log('Top match:', searchResults.results[0]);
+
+  // Initialize Sokuja ID provider
+  const sokuja = new AnimaScraper({ provider: 'sokujaId' });
+  // Fetch stream for episode 1 directly using MAL ID 52991!
+  const episodeStream = await sokuja.getEpisodeByMalId(52991, 1);
+  console.log('Video Player:', episodeStream.defaultStreamUrl);
+}
+
+main().catch(console.error);</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 5: PROJECT STRUCTURE -->
+      <!-- ======================================================== -->
+      <section id="structure" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">5</span>
+            <span x-show="lang === 'en'">Project Structure</span>
+            <span x-show="lang === 'id'" x-cloak>Struktur Proyek</span>
+          </h2>
+        </div>
+
+        <div class="p-4 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg font-mono text-xs text-abyss-800 dark:text-abyss-200">
+<pre class="!border-0 !p-0">anima-scraper/
+├── index.js                     # Express entry point, routing & global error handling
+├── package.json                 # npm dependencies (express, cheerio) & run scripts
+├── routes/                      # Express route controllers
+│   ├── myanimelist.js           # MyAnimeList REST API endpoints (/api/v1/myanimelist)
+│   └── sokujaId.js              # Sokuja ID REST API endpoints (/api/v1/sokujaId)
+├── scraper/                     # Core Scraping Engine & Library SDK
+│   ├── index.js                 # Unified AnimaScraper class & factory exports
+│   ├── malLinker.js             # MalSokujaLinker (fuzzy title & season matching)
+│   └── providers/               # Provider-specific scraper implementations
+│       ├── myanimelist.js       # Cheerio HTML parser for MyAnimeList.net
+│       └── sokujaId.js          # Cheerio & Next.js Flight parser for Sokuja ID
+└── public/                      # Static web assets & documentation UI
+    ├── index.html               # Interactive Landing Page & Hero Console
+    ├── docs.html                # Official Documentation Page (/docs)
+    └── logo.png                 # Mascot & Logo Asset</pre>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 6: NODE.JS SDK USAGE -->
+      <!-- ======================================================== -->
+      <section id="sdk-usage" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">6</span>
+            <span>Node.js SDK Usage</span>
+          </h2>
+        </div>
+
+        <p class="text-xs sm:text-sm text-abyss-700 dark:text-abyss-300">
+          <span x-show="lang === 'en'">To use the scraper directly in Node.js without calling the local HTTP server, import modules from the <code class="font-mono text-ember-500">scraper</code> directory:</span>
+          <span x-show="lang === 'id'" x-cloak>Untuk menggunakan scraper langsung di aplikasi Node.js tanpa memanggil HTTP server lokal, Anda dapat meng-import modul dari folder <code class="font-mono text-ember-500">scraper</code>:</span>
+        </p>
+
+        <div class="space-y-4">
+          <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100">1. AnimaScraper Factory</h3>
+          <pre><code class="language-javascript">const { AnimaScraper } = require('./scraper');
+
+// MyAnimeList Provider
+const mal = new AnimaScraper({ provider: 'myanimelist' });
+
+// Sokuja ID Provider
+const sokuja = new AnimaScraper({ provider: 'sokujaId' });</code></pre>
+
+          <h3 id="sdk-classes" class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100 pt-2">
+            <span x-show="lang === 'en'">2. Using Direct Provider Classes</span>
+            <span x-show="lang === 'id'" x-cloak>2. Menggunakan Direct Provider Classes</span>
+          </h3>
+          <pre><code class="language-javascript">const { MyAnimeList, SokujaId, MalSokujaLinker } = require('./scraper');
+
+// Custom instance with specific options
+const malDirect = new MyAnimeList({
+  baseUrl: 'https://myanimelist.net',
+  timeout: 15000
+});
+
+const sokujaDirect = new SokujaId({
+  baseUrl: 'https://sokuja.id',
+  timeout: 15000
+});
+
+// Custom linker instance
+const linker = new MalSokujaLinker(sokujaDirect, malDirect);
+const matchResult = await linker.findSokujaMatch(52991);
+console.log(matchResult.matchedSlug); // 'sousou-no-frieren-subtitle-indonesia'</code></pre>
+
+          <h3 id="sdk-errors" class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100 pt-2">
+            <span x-show="lang === 'en'">3. Error Handling with ScraperError</span>
+            <span x-show="lang === 'id'" x-cloak>3. Error Handling dengan ScraperError</span>
+          </h3>
+          <pre><code class="language-javascript">const { AnimaScraper, ScraperError } = require('./scraper');
+const scraper = new AnimaScraper({ provider: 'myanimelist' });
+
+try {
+  const anime = await scraper.getAnimeById(99999999);
+} catch (error) {
+  if (error instanceof ScraperError) {
+    console.error(`HTTP Status: ${error.status}`);
+    console.error(`Message: ${error.message}`);
+  } else {
+    console.error('System / Network Error:', error.message);
+  }
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 7: MYANIMELIST PROVIDER REFERENCE -->
+      <!-- ======================================================== -->
+      <section id="mal-reference" class="scroll-mt-24 space-y-8">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/30">Provider: MyAnimeList</span>
+            <span class="text-xs font-mono text-abyss-400">Base: /api/v1/myanimelist</span>
+          </div>
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 text-sm font-mono">7</span>
+            <span>MyAnimeList Reference & Endpoints</span>
+          </h2>
+        </div>
+
+        <!-- 7.1 Search Anime -->
+        <div id="mal-search" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/search</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">mal.search(query, { page })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Search anime by keyword on MyAnimeList with pagination support.</span>
+            <span x-show="lang === 'id'" x-cloak>Mencari anime di MyAnimeList berdasarkan kata kunci dengan filter paginasi.</span>
+          </p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="border-b border-canvas-300 dark:border-abyss-800 font-mono text-abyss-400">
+                <tr>
+                  <th class="py-2" x-text="lang === 'en' ? 'Parameter' : 'Parameter'">Parameter</th>
+                  <th x-text="lang === 'en' ? 'Type' : 'Tipe'">Type</th>
+                  <th x-text="lang === 'en' ? 'Location' : 'Lokasi'">Location</th>
+                  <th x-text="lang === 'en' ? 'Status' : 'Status'">Status</th>
+                  <th x-text="lang === 'en' ? 'Description' : 'Deskripsi'">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-canvas-200 dark:divide-abyss-800/60 font-mono text-abyss-700 dark:text-abyss-300">
+                <tr>
+                  <td class="py-2 text-ember-500 font-semibold">q</td>
+                  <td>string</td>
+                  <td>Query</td>
+                  <td><span class="text-ember-500" x-text="lang === 'en' ? 'Required' : 'Wajib'">Required</span></td>
+                  <td><span x-text="lang === 'en' ? 'Search keyword (e.g. \"frieren\", \"naruto\")' : 'Kata kunci pencarian (contoh: \"frieren\", \"naruto\")'"></span></td>
+                </tr>
+                <tr>
+                  <td class="py-2 text-abyss-400">page</td>
+                  <td>number</td>
+                  <td>Query</td>
+                  <td><span x-text="lang === 'en' ? 'Optional' : 'Opsional'">Optional</span></td>
+                  <td><span x-text="lang === 'en' ? 'Page number (default: 1)' : 'Nomor halaman (default: 1)'"></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <pre><code class="language-bash">curl "http://localhost:3000/api/v1/myanimelist/search?q=frieren&page=1"</code></pre>
+        </div>
+
+        <!-- 7.2 Top & Ranking -->
+        <div id="mal-top" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/top</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">mal.getTopAnime({ type, page })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Retrieve top ranked anime categorized by rating, popularity, airing status, or favorites.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengambil daftar anime peringkat teratas (Top Ranked, Top Airing, Popularity, Favorite).</span>
+          </p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="border-b border-canvas-300 dark:border-abyss-800 font-mono text-abyss-400">
+                <tr>
+                  <th class="py-2" x-text="lang === 'en' ? 'Parameter' : 'Parameter'">Parameter</th>
+                  <th x-text="lang === 'en' ? 'Type' : 'Tipe'">Type</th>
+                  <th x-text="lang === 'en' ? 'Valid Values' : 'Nilai yang Valid'">Valid Values</th>
+                  <th x-text="lang === 'en' ? 'Description' : 'Deskripsi'">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-canvas-200 dark:divide-abyss-800/60 font-mono text-abyss-700 dark:text-abyss-300">
+                <tr>
+                  <td class="py-2 text-ember-500 font-semibold">type</td>
+                  <td>string</td>
+                  <td>all, airing, upcoming, tv, movie, ova, special, bypopularity, favorite</td>
+                  <td><span x-text="lang === 'en' ? 'Ranking filter (default: \"all\")' : 'Kategori ranking (default: \"all\")'"></span></td>
+                </tr>
+                <tr>
+                  <td class="py-2 text-abyss-400">page</td>
+                  <td>number</td>
+                  <td>Positive integer</td>
+                  <td><span x-text="lang === 'en' ? 'Page number (default: 1)' : 'Halaman (default: 1)'"></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <pre><code class="language-bash">curl "http://localhost:3000/api/v1/myanimelist/top?type=bypopularity&page=1"</code></pre>
+        </div>
+
+        <!-- 7.3 Seasonal Anime -->
+        <div id="mal-season" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/season/:year?/:season?</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">mal.getSeasonalAnime({ year, season, type })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Retrieve seasonal anime. If year and season are omitted, defaults to the current active broadcast season.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengambil daftar anime per musim penayangan. Jika tahun dan musim diabaikan, akan mengembalikan musim aktif saat ini.</span>
+          </p>
+
+          <pre><code class="language-bash"># Current active season
+curl "http://localhost:3000/api/v1/myanimelist/season"
+
+# Specific season archive (e.g. Fall 2023)
+curl "http://localhost:3000/api/v1/myanimelist/season/2023/fall"</code></pre>
+        </div>
+
+        <!-- 7.4 Weekly Schedule -->
+        <div id="mal-schedule" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/schedule</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">mal.getSchedule({ day })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Weekly broadcast schedule filtered by day: <code class="font-mono text-ember-500">monday</code>, <code class="font-mono text-ember-500">tuesday</code>, <code class="font-mono text-ember-500">wednesday</code>, <code class="font-mono text-ember-500">thursday</code>, <code class="font-mono text-ember-500">friday</code>, <code class="font-mono text-ember-500">saturday</code>, <code class="font-mono text-ember-500">sunday</code>, or <code class="font-mono text-ember-500">other</code>.</span>
+            <span x-show="lang === 'id'" x-cloak>Jadwal penayangan mingguan berdasarkan hari: <code class="font-mono text-ember-500">monday</code>, <code class="font-mono text-ember-500">tuesday</code>, <code class="font-mono text-ember-500">wednesday</code>, <code class="font-mono text-ember-500">thursday</code>, <code class="font-mono text-ember-500">friday</code>, <code class="font-mono text-ember-500">saturday</code>, <code class="font-mono text-ember-500">sunday</code>, atau <code class="font-mono text-ember-500">other</code>.</span>
+          </p>
+
+          <pre><code class="language-bash">curl "http://localhost:3000/api/v1/myanimelist/schedule?day=friday"</code></pre>
+        </div>
+
+        <!-- 7.5 Detail Anime by ID -->
+        <div id="mal-detail" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/anime/:id</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">mal.getAnimeById(id)</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Fetches complete anime metadata: synopsis, global rank & score, embedded YouTube trailer, studios, producers, genres, related anime (prequels/sequels/spin-offs), and staff previews.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengembalikan metadata lengkap suatu anime: Sinopsis lengkap, skor & perankingan global, trailer video embed YouTube, studio, produser, genre, anime relasi (sequel/prequel/side-story), dan preview staf.</span>
+          </p>
+
+          <pre><code class="language-bash"># Example: 52991 is the MyAnimeList ID for Sousou no Frieren
+curl http://localhost:3000/api/v1/myanimelist/anime/52991</code></pre>
+        </div>
+
+        <!-- 7.6 Episodes, Characters, Recommendations, Taxonomies -->
+        <div id="mal-episodes" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100">
+            <span x-show="lang === 'en'">Additional MyAnimeList Endpoints</span>
+            <span x-show="lang === 'id'" x-cloak>Endpoint Tambahan MyAnimeList</span>
+          </h3>
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/anime/:id/episodes?page=1</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Episodes title & air date listing' : 'Daftar judul & tanggal tayang episode'"></span>
+            </li>
+            <li id="mal-characters" class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/anime/:id/characters</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Full characters & voice actors (Seiyuu)' : 'Daftar karakter lengkap & pengisi suara (Seiyuu)'"></span>
+            </li>
+            <li id="mal-recommendations" class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/anime/:id/recommendations</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Community recommendations for this anime' : 'Rekomendasi anime terkait dari komunitas'"></span>
+            </li>
+            <li id="mal-genres" class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/genres</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'List of all genre IDs, themes, demographics' : 'Daftar ID semua genre, tema, demografi & studio'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/genre/:id?page=1</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Anime listing by genre ID' : 'Katalog anime berdasarkan ID genre'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/myanimelist/producer/:id?page=1</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Anime listing by studio / producer ID' : 'Katalog anime berdasarkan studio/produser ID'"></span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 8: SOKUJA ID PROVIDER REFERENCE -->
+      <!-- ======================================================== -->
+      <section id="sokuja-reference" class="scroll-mt-24 space-y-8">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Provider: Sokuja ID</span>
+            <span class="text-xs font-mono text-abyss-400">Base: /api/v1/sokujaId</span>
+          </div>
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-sm font-mono">8</span>
+            <span>Sokuja ID Reference (Streaming & Sub Indo)</span>
+          </h2>
+        </div>
+
+        <!-- 8.1 Dual Mode Highlights -->
+        <div id="sokuja-dual-mode" class="scroll-mt-24 p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500 text-pure-light" x-text="lang === 'en' ? 'FEATURE: DUAL-MODE ACCESS' : 'FITUR UNGGULAN: DUAL-MODE'">FEATURE: DUAL-MODE ACCESS</span>
+            <span class="text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400" x-text="lang === 'en' ? 'Access Without Slugs!' : 'Akses Tanpa Slug!'">Access Without Slugs!</span>
+          </div>
+          <p class="text-xs sm:text-sm text-abyss-700 dark:text-abyss-300 leading-relaxed">
+            <span x-show="lang === 'en'">
+              You <strong>DO NOT</strong> need to know arbitrary fansub slugs (e.g. <code class="font-mono text-xs">sousou-no-frieren-subtitle-indonesia</code>). AnimaScraper intelligently recognizes numeric MyAnimeList IDs and automatically bridges them:
+            </span>
+            <span x-show="lang === 'id'" x-cloak>
+              Anda <strong>TIDAK PERLU</strong> mengetahui slug judul panjang di Sokuja (seperti <code class="font-mono text-xs">sousou-no-frieren-subtitle-indonesia</code>). Router AnimaScraper secara pintar mendeteksi ID numerik MyAnimeList dan menghubungkannya secara otomatis:
+            </span>
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+            <div class="p-3 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg">
+              <span class="text-ember-500 font-bold block mb-1" x-text="lang === 'en' ? 'Access via MyAnimeList ID:' : 'Akses via MyAnimeList ID:'">Access via MyAnimeList ID:</span>
+              <code class="text-emerald-500 font-bold block">GET /api/v1/sokujaId/52991</code>
+              <code class="text-emerald-500 font-bold block mt-1">GET /api/v1/sokujaId/52991/episode/1</code>
+            </div>
+            <div class="p-3 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg">
+              <span class="text-abyss-400 font-bold block mb-1" x-text="lang === 'en' ? 'Or via Original Sokuja Slug:' : 'Atau via Sokuja Slug Asli:'">Or via Original Sokuja Slug:</span>
+              <code class="text-abyss-300 block">GET /api/v1/sokujaId/anime/sousou-no-frieren-subtitle-indonesia</code>
+              <code class="text-abyss-300 block mt-1">GET /api/v1/sokujaId/anime/sousou-no-frieren.../episode/1</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8.2 Home Feed -->
+        <div id="sokuja-home" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/home</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sokuja.getHome({ page })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Aggregates complete Sokuja homepage content: featured slider, latest episode releases today, ongoing anime, completed anime, and trending.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengambil data komplit beranda Sokuja: Slider anime featured, rilisan episode terbaru hari ini, daftar Ongoing, Completed, dan anime trending.</span>
+          </p>
+
+          <pre><code class="language-bash">curl "http://localhost:3000/api/v1/sokujaId/home"</code></pre>
+        </div>
+
+        <!-- 8.3 Latest Updates -->
+        <div id="sokuja-latest" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/latest</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sokuja.getLatestUpdates({ page })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Paginated listing of newly published anime episodes on Sokuja ID.</span>
+            <span x-show="lang === 'id'" x-cloak>Rilisan episode paling baru yang baru saja diunggah ke server Sokuja ID.</span>
+          </p>
+
+          <pre><code class="language-bash">curl "http://localhost:3000/api/v1/sokujaId/latest?page=1"</code></pre>
+        </div>
+
+        <!-- 8.4 Search & Browse -->
+        <div id="sokuja-search" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/browse</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sokuja.browseAnime(filters)</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Advanced multi-criteria catalog browser with filters for genres, studios, seasons, airing status, formats (TV, Movie, OVA), and sort ordering.</span>
+            <span x-show="lang === 'id'" x-cloak>Filter katalog lengkap dengan parameter genre, studio, season, status penayangan, format (TV, Movie, OVA), serta urutan sortir.</span>
+          </p>
+
+          <pre><code class="language-bash"># Filter completed action anime sorted by score
+curl "http://localhost:3000/api/v1/sokujaId/browse?genre=action&status=completed&order=score&page=1"</code></pre>
+        </div>
+
+        <!-- 8.5 Detail Anime & Episodes -->
+        <div id="sokuja-detail" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/:idOrSlug</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sokuja.getAnimeDetail(idOrSlug)</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Fetches anime details, airing season, genres, and the complete watchable episode list.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengambil detail anime, informasi musim, status tayang, dan daftar lengkap episode yang tersedia untuk ditonton.</span>
+          </p>
+
+          <pre><code class="language-bash"># Using MAL ID
+curl http://localhost:3000/api/v1/sokujaId/52991
+
+# Episodes only (paginated & sorted)
+curl "http://localhost:3000/api/v1/sokujaId/52991/episodes?page=1&limit=50&order=asc"</code></pre>
+        </div>
+
+        <!-- 8.6 Video Streaming & Download -->
+        <div id="sokuja-stream" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/:id/episode/:number</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sokuja.getAnimeEpisode(id, epNumber)</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400 leading-relaxed">
+            <span x-show="lang === 'en'">Extracts direct embedded video player (default stream), server mirrors, and direct cloud download links (Google Drive, Mega, Mediafire) grouped by resolution: 360p, 480p, 720p, and 1080p.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengekstrak iframe pemutar video langsung (default stream), server alternatif (mirror), serta link download dari berbagai cloud storage (Google Drive, Mega, Mediafire) per resolusi 360p, 480p, 720p, dan 1080p.</span>
+          </p>
+
+          <pre><code class="language-bash"># Fetch streaming video for Frieren Episode 28 using MAL ID
+curl http://localhost:3000/api/v1/sokujaId/52991/episode/28
+
+# Or using specific episode slug
+curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode-28-subtitle-indonesia</code></pre>
+
+          <!-- Sample JSON Payload -->
+          <div class="text-xs font-mono text-abyss-500 dark:text-abyss-400 font-semibold pt-1">Sample Response Payload:</div>
+          <pre><code class="language-json">{
+  "status": "success",
+  "provider": "sokujaId",
+  "data": {
+    "title": "Sousou no Frieren Episode 28 Subtitle Indonesia",
+    "episode": 28,
+    "defaultStreamUrl": "https://blogger.googleusercontent.com/g/video?...",
+    "videoMirrors": [
+      { "server": "Server 1 (Blogger)", "url": "https://..." },
+      { "server": "Server 2 (Google Drive)", "url": "https://..." },
+      { "server": "Server 3 (Vidhide)", "url": "https://..." }
+    ],
+    "downloads": [
+      {
+        "resolution": "720p",
+        "format": "MP4",
+        "links": [
+          { "host": "Google Drive", "url": "https://..." },
+          { "host": "Mega", "url": "https://..." }
+        ]
+      }
+    ],
+    "navigation": {
+      "prevEpisodeSlug": "sousou-no-frieren-episode-27-subtitle-indonesia",
+      "nextEpisodeSlug": null,
+      "allEpisodesSlug": "sousou-no-frieren-subtitle-indonesia"
+    }
+  }
+}</code></pre>
+        </div>
+
+        <!-- 8.7 Schedule & Taxonomies -->
+        <div id="sokuja-schedule" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100">
+            <span x-show="lang === 'en'">Sokuja Release Schedule & Taxonomies</span>
+            <span x-show="lang === 'id'" x-cloak>Jadwal Rilis & Taksonomi Sokuja</span>
+          </h3>
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/schedule?day=jumat</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Schedule days: senin, selasa, rabu, kamis, jumat, sabtu, minggu' : 'Jadwal rilis: senin, selasa, rabu, kamis, jumat, sabtu, minggu'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/ongoing?page=1</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Currently airing ongoing anime' : 'Daftar anime yang sedang aktif tayang'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/completed?page=1</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Completed anime catalog' : 'Daftar anime tamat (telah selesai tayang)'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/genres</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'All Sokuja genre slugs' : 'Daftar semua slug genre Sokuja ID'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/studios</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'All animation studios' : 'Daftar studio animasi'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/seasons</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Season archives (winter-2026, fall-2023, etc.)' : 'Arsip musim (winter-2026, fall-2023, dll.)'"></span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 9: MAL-TO-SOKUJA BRIDGE -->
+      <!-- ======================================================== -->
+      <section id="mal-linker" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-ember-500/10 text-ember-500 border border-ember-500/30">Bridge System</span>
+            <span class="text-xs font-mono text-abyss-400">scraper/malLinker.js</span>
+          </div>
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">9</span>
+            <span>MAL-to-Sokuja Bridge System</span>
+          </h2>
+        </div>
+
+        <p class="text-xs sm:text-sm text-abyss-700 dark:text-abyss-300 leading-relaxed">
+          <span x-show="lang === 'en'">
+            The main challenge in linking MyAnimeList and fansub websites is title variation (such as appended <code class="font-mono text-ember-500">Subtitle Indonesia</code>, Roman numerals like <code class="font-mono text-ember-500">II / III</code>, or keywords like <code class="font-mono text-ember-500">Part 2 / Cour 2</code>).
+          </span>
+          <span x-show="lang === 'id'" x-cloak>
+            Tantangan utama menghubungkan MyAnimeList dan situs fansub adalah perbedaan format penamaan (seperti penambahan kata <code class="font-mono text-ember-500">Subtitle Indonesia</code>, angka romawi <code class="font-mono text-ember-500">II / III</code>, atau kata <code class="font-mono text-ember-500">Part 2 / Cour 2</code>).
+          </span>
+        </p>
+
+        <div class="p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg space-y-4">
+          <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100" x-text="lang === 'en' ? '5-Phase Heuristic Matching Engine:' : 'Tahapan Heuristic Matching Engine:'">5-Phase Heuristic Matching Engine:</h3>
+          <ol class="list-decimal list-inside text-xs sm:text-sm text-abyss-700 dark:text-abyss-300 space-y-2 pl-2">
+            <li>
+              <strong>Title Token Normalization</strong>:
+              <span x-show="lang === 'en'">Cleans stop-words (e.g. <em>"sub indo"</em>, <em>"subtitle indonesia"</em>) and special punctuation.</span>
+              <span x-show="lang === 'id'" x-cloak>Membersihkan kata henti (stop-words) seperti <em>"sub indo"</em>, <em>"subtitle indonesia"</em>, dan tanda baca khusus.</span>
+            </li>
+            <li>
+              <strong>Roman Numeral & Season Detection</strong>:
+              <span x-show="lang === 'en'">Converts Roman numerals (e.g. <code>Mushoku Tensei II</code>) into season 2, and detects expressions like <code>Season 2</code>, <code>2nd Season</code>, and <code>S2</code>.</span>
+              <span x-show="lang === 'id'" x-cloak>Mengubah angka romawi (e.g. <code>Mushoku Tensei II</code>) menjadi nomor season 2, serta mendeteksi kata <code>Season 2</code>, <code>2nd Season</code>, dan <code>S2</code>.</span>
+            </li>
+            <li>
+              <strong>Cour & Part Parsing</strong>:
+              <span x-show="lang === 'en'">Detects multi-part seasons such as <code>Part 1</code>, <code>Part 2</code>, <code>Zenpen</code>, and <code>Kouhen</code>.</span>
+              <span x-show="lang === 'id'" x-cloak>Mendeteksi pembagian musim seperti <code>Part 1</code>, <code>Part 2</code>, <code>Zenpen</code>, dan <code>Kouhen</code>.</span>
+            </li>
+            <li>
+              <strong>Aired Year Cross-Validation</strong>:
+              <span x-show="lang === 'en'">Verifies release years against MyAnimeList premiere dates to prevent false positives with reboots or classic titles.</span>
+              <span x-show="lang === 'id'" x-cloak>Memverifikasi tahun rilis dari data MyAnimeList untuk mencegah false positive pada judul remake/reboot.</span>
+            </li>
+            <li>
+              <strong>Jaccard Similarity Scoring</strong>:
+              <span x-show="lang === 'en'">Calculates token overlap percentage and picks the highest scoring match with a safe confidence threshold.</span>
+              <span x-show="lang === 'id'" x-cloak>Menghitung persentase kemiripan token kata untuk memilih entri terbaik dengan threshold kepercayaan tinggi.</span>
+            </li>
+          </ol>
+        </div>
+
+        <!-- 9.2 Endpoint Resolve -->
+        <div id="mal-resolve" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/resolve/:malId</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sokuja.resolveMalId(malId)</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Test direct resolution from a MAL ID to the matching Sokuja slug along with confidence score and match metadata:</span>
+            <span x-show="lang === 'id'" x-cloak>Menguji resolusi langsung ID MAL menjadi slug Sokuja beserta skor kecocokan dan detail matching:</span>
+          </p>
+
+          <pre><code class="language-bash">curl http://localhost:3000/api/v1/sokujaId/resolve/52991</code></pre>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 10: INTERACTIVE API PLAYGROUND -->
+      <!-- ======================================================== -->
+      <section id="playground" class="scroll-mt-24 space-y-6">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-ember-500 text-pure-light shadow-glow-xs">Live Tester</span>
+            <span class="text-xs font-mono text-ember-500 font-semibold" x-text="lang === 'en' ? 'Try Live in Browser' : 'Coba Langsung di Browser'">Try Live in Browser</span>
+          </div>
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">10</span>
+            <span>Interactive API Playground</span>
+          </h2>
+        </div>
+
+        <p class="text-xs sm:text-sm text-abyss-700 dark:text-abyss-300 leading-relaxed">
+          <span x-show="lang === 'en'">Execute live HTTP requests against your local AnimaScraper backend in real-time. Pick a quick preset or type your custom URL.</span>
+          <span x-show="lang === 'id'" x-cloak>Uji coba request langsung ke server backend lokal AnimaScraper secara realtime. Pilih preset endpoint atau ketik URL kustom Anda.</span>
+        </p>
+
+        <!-- Playground Box -->
+        <div class="p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg shadow-card-glow space-y-5">
+          <!-- Preset Selector -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-mono text-abyss-400" x-text="lang === 'en' ? 'Quick Presets:' : 'Preset Cepat:'">Quick Presets:</span>
+            <button
+              type="button"
+              @click="setPlayground('/api/v1/myanimelist/search?q=frieren')"
+              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
+            >
+              MAL Search
+            </button>
+            <button
+              type="button"
+              @click="setPlayground('/api/v1/myanimelist/top?type=all&page=1')"
+              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
+            >
+              MAL Top Anime
+            </button>
+            <button
+              type="button"
+              @click="setPlayground('/api/v1/sokujaId/home')"
+              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
+            >
+              Sokuja Home
+            </button>
+            <button
+              type="button"
+              @click="setPlayground('/api/v1/sokujaId/52991')"
+              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
+            >
+              Sokuja via MAL ID (52991)
+            </button>
+            <button
+              type="button"
+              @click="setPlayground('/api/v1/sokujaId/52991/episode/1')"
+              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
+            >
+              Sokuja Stream Ep 1
+            </button>
+          </div>
+
+          <!-- URL Bar & Action -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <span class="px-3 py-2 rounded-xl text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 text-center">
+              GET
+            </span>
+            <input
+              type="text"
+              x-model="playgroundUrl"
+              class="flex-1 px-3.5 py-2 rounded-xl text-xs font-mono border bg-canvas-200/60 dark:bg-terminal-header border-canvas-300 dark:border-terminal-border text-abyss-950 dark:text-abyss-50 focus:outline-none focus:border-ember-500"
+              placeholder="/api/v1/myanimelist/search?q=frieren"
+            />
+            <button
+              type="button"
+              @click="runPlayground()"
+              :disabled="playgroundLoading"
+              class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold text-pure-light bg-ember-500 hover:bg-ember-600 disabled:opacity-50 transition-all shadow-glow-xs cursor-pointer shrink-0"
+            >
+              <svg x-show="!playgroundLoading" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <svg x-show="playgroundLoading" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="0.75"/></svg>
+              <span x-text="playgroundLoading ? (lang === 'en' ? 'Fetching...' : 'Memuat...') : (lang === 'en' ? 'Send Request' : 'Kirim Request')">Send Request</span>
+            </button>
+          </div>
+
+          <!-- Response Area -->
+          <div class="rounded-xl border border-canvas-300 dark:border-terminal-border bg-canvas-100 dark:bg-terminal-header p-4 space-y-2">
+            <div class="flex items-center justify-between text-xs font-mono">
+              <div class="flex items-center gap-2">
+                <span class="text-abyss-400" x-text="lang === 'en' ? 'Response Status:' : 'Status Respon:'">Response Status:</span>
+                <span
+                  class="font-bold px-1.5 py-0.5 rounded text-[11px]"
+                  :class="playgroundStatus >= 200 && playgroundStatus < 300 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/20 text-red-500'"
+                  x-text="playgroundStatus ? playgroundStatus + ' ' + (playgroundStatus === 200 ? 'OK' : '') : 'Idle'"
+                >
+                  Idle
+                </span>
+                <span x-show="playgroundTime" class="text-abyss-400 text-[11px]" x-text="'(' + playgroundTime + ' ms)'"></span>
+              </div>
+              <button
+                x-show="playgroundResponse"
+                @click="copySnippet(playgroundResponse, 'playground')"
+                class="text-[11px] font-mono text-abyss-400 hover:text-ember-500 transition-colors"
+              >
+                <span x-text="copiedId === 'playground' ? (lang === 'en' ? 'Copied!' : 'Tersalin!') : (lang === 'en' ? 'Copy JSON' : 'Salin JSON')">Copy JSON</span>
+              </button>
+            </div>
+
+            <!-- Output Box -->
+            <pre class="max-h-80 overflow-y-auto font-mono text-xs text-abyss-800 dark:text-abyss-200"><code x-text="playgroundResponse || (lang === 'en' ? '// Click \"Send Request\" to execute live request against backend...' : '// Klik \"Send Request\" untuk mengeksekusi request langsung ke backend...')">// Click "Send Request" to execute live request against backend...</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer Info -->
+      <footer class="pt-8 border-t border-canvas-300 dark:border-abyss-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-abyss-500 dark:text-abyss-400">
+        <div>
+          AnimaScraper Service &copy; 2026. <span x-text="lang === 'en' ? 'Made for Anime Developers.' : 'Dibuat untuk Anime Developers.'">Made for Anime Developers.</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="/" class="hover:text-ember-500 transition-colors">Home</a>
+          <a href="/api/v1/info" target="_blank" class="hover:text-ember-500 transition-colors">API Info</a>
+          <a href="/health" target="_blank" class="hover:text-ember-500 transition-colors">Health</a>
+          <a href="#intro" class="hover:text-ember-500 transition-colors"><span x-text="lang === 'en' ? 'Back to top ↑' : 'Kembali ke Atas ↑'">Back to top ↑</span></a>
+        </div>
+      </footer>
+
+    </main>
+
+    <!-- RIGHT SIDEBAR: TABLE OF CONTENTS (Desktop only) -->
+    <aside class="hidden xl:block w-56 shrink-0 sticky top-24 h-[calc(100vh-8rem)] text-xs overflow-y-auto space-y-3 font-mono">
+      <div class="font-bold uppercase tracking-wider text-abyss-400 dark:text-abyss-400 flex items-center gap-1.5 pb-1 border-b border-canvas-300 dark:border-abyss-800">
+        <svg class="w-3.5 h-3.5 text-ember-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>
+        <span x-text="lang === 'en' ? 'On This Page' : 'Pada Halaman Ini'">On This Page</span>
+      </div>
+      <ul class="space-y-1.5 text-abyss-600 dark:text-abyss-400">
+        <li><a href="#intro" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">1. Overview & Architecture</span><span x-show="lang === 'id'" x-cloak>1. Pengenalan & Arsitektur</span></a></li>
+        <li><a href="#features" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">2. Key Features</span><span x-show="lang === 'id'" x-cloak>2. Fitur Utama</span></a></li>
+        <li><a href="#setup" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">3. Setup & Installation</span><span x-show="lang === 'id'" x-cloak>3. Setup & Instalasi</span></a></li>
+        <li><a href="#quickstart" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">4. Quickstart Guide</span><span x-show="lang === 'id'" x-cloak>4. Quickstart Guide</span></a></li>
+        <li><a href="#structure" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">5. Project Structure</span><span x-show="lang === 'id'" x-cloak>5. Struktur Proyek</span></a></li>
+        <li><a href="#sdk-usage" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">6. Node.js SDK Usage</span><span x-show="lang === 'id'" x-cloak>6. Node.js SDK Usage</span></a></li>
+        <li><a href="#mal-reference" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">7. MyAnimeList Reference</span><span x-show="lang === 'id'" x-cloak>7. MyAnimeList Reference</span></a></li>
+        <li><a href="#sokuja-reference" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">8. Sokuja ID Reference</span><span x-show="lang === 'id'" x-cloak>8. Sokuja ID Reference</span></a></li>
+        <li><a href="#mal-linker" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">9. MAL-to-Sokuja Bridge</span><span x-show="lang === 'id'" x-cloak>9. MAL-to-Sokuja Bridge</span></a></li>
+        <li><a href="#playground" class="hover:text-ember-500 transition-colors block font-semibold text-ember-500">10. Live Playground</a></li>
+      </ul>
+    </aside>
+
+  </div>
+
+  <!-- Alpine Component Logic -->
+  <script>
+    function animaDocs() {
+      return {
+        isDark: true,
+        lang: 'en', // English default as requested
+        sidebarOpen: false,
+        searchQuery: '',
+        activeSection: 'intro',
+        copiedId: null,
+
+        // Playground State
+        playgroundUrl: '/api/v1/myanimelist/search?q=frieren&page=1',
+        playgroundLoading: false,
+        playgroundStatus: null,
+        playgroundTime: null,
+        playgroundResponse: '',
+
+        init() {
+          // Initialize theme
+          const savedTheme = localStorage.getItem('anima_theme');
+          this.isDark = savedTheme !== 'light';
+
+          // Initialize language (defaults to 'en')
+          const savedLang = localStorage.getItem('anima_lang');
+          this.lang = savedLang === 'id' ? 'id' : 'en';
+          document.documentElement.lang = this.lang;
+
+          // Initialize Prism syntax highlighting
+          this.$nextTick(() => {
+            if (window.Prism) Prism.highlightAll();
+          });
+
+          // Scroll spy for active section
+          window.addEventListener('scroll', () => {
+            const sections = ['intro', 'features', 'setup', 'quickstart', 'structure', 'sdk-usage', 'mal-reference', 'sokuja-reference', 'mal-linker', 'playground'];
+            const scrollPos = window.scrollY + 120;
+            for (let i = sections.length - 1; i >= 0; i--) {
+              const el = document.getElementById(sections[i]);
+              if (el && el.offsetTop <= scrollPos) {
+                this.activeSection = sections[i];
+                break;
+              }
+            }
+          });
+
+          // Search jump handler
+          this.$watch('searchQuery', (val) => {
+            if (!val || val.length < 2) return;
+            const q = val.toLowerCase();
+            const targets = [
+              { key: 'search', id: 'mal-search' },
+              { key: 'cari', id: 'mal-search' },
+              { key: 'top', id: 'mal-top' },
+              { key: 'rank', id: 'mal-top' },
+              { key: 'season', id: 'mal-season' },
+              { key: 'musim', id: 'mal-season' },
+              { key: 'stream', id: 'sokuja-stream' },
+              { key: 'download', id: 'sokuja-stream' },
+              { key: 'unduh', id: 'sokuja-stream' },
+              { key: 'episode', id: 'sokuja-stream' },
+              { key: 'resolve', id: 'mal-resolve' },
+              { key: 'linker', id: 'mal-linker' },
+              { key: 'bridge', id: 'mal-linker' },
+              { key: 'setup', id: 'setup' },
+              { key: 'install', id: 'setup' },
+              { key: 'instalasi', id: 'setup' },
+              { key: 'sdk', id: 'sdk-usage' },
+              { key: 'playground', id: 'playground' }
+            ];
+            const match = targets.find(t => t.key.includes(q) || q.includes(t.key));
+            if (match) {
+              const targetEl = document.getElementById(match.id);
+              if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+            }
+          });
+        },
+
+        setLang(l) {
+          this.lang = l;
+          localStorage.setItem('anima_lang', l);
+          document.documentElement.lang = l;
+        },
+
+        toggleTheme() {
+          this.isDark = !this.isDark;
+          if (this.isDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('anima_theme', 'dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('anima_theme', 'light');
+          }
+        },
+
+        copySnippet(text, id) {
+          navigator.clipboard.writeText(text).then(() => {
+            this.copiedId = id;
+            setTimeout(() => {
+              this.copiedId = null;
+            }, 2000);
+          });
+        },
+
+        setPlayground(url) {
+          this.playgroundUrl = url;
+          this.runPlayground();
+        },
+
+        async runPlayground() {
+          if (!this.playgroundUrl) return;
+          this.playgroundLoading = true;
+          this.playgroundStatus = null;
+          this.playgroundTime = null;
+          this.playgroundResponse = '';
+
+          const startTime = performance.now();
+          try {
+            const res = await fetch(this.playgroundUrl);
+            const endTime = performance.now();
+            this.playgroundTime = Math.round(endTime - startTime);
+            this.playgroundStatus = res.status;
+            const data = await res.json();
+            this.playgroundResponse = JSON.stringify(data, null, 2);
+          } catch (err) {
+            const endTime = performance.now();
+            this.playgroundTime = Math.round(endTime - startTime);
+            this.playgroundStatus = 500;
+            this.playgroundResponse = JSON.stringify({
+              error: 'Failed to fetch',
+              message: err.message
+            }, null, 2);
+          } finally {
+            this.playgroundLoading = false;
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>
