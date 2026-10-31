@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const myanimelistRouter = require('./routes/myanimelist');
 const sokujaIdRouter = require('./routes/sokujaId');
+const sakunimeRouter = require('./routes/sakunime');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,12 +68,13 @@ app.get('/api/v1/info', (req, res) => {
     project: 'anima-scraper',
     version: '1.0.0',
     description: 'Anime Scraper Service',
-    providers: ['myanimelist', 'sokujaId']
+    providers: ['myanimelist', 'sokujaId', 'sakunime']
   });
 });
 
 app.use('/api/v1/myanimelist', myanimelistRouter);
 app.use('/api/v1/sokujaId', sokujaIdRouter);
+app.use('/api/v1/sakunime', sakunimeRouter);
 
 // ==========================================
 // 404 Not Found Middleware

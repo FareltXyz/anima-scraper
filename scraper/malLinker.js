@@ -446,8 +446,195 @@ class MalSokujaLinker {
   }
 }
 
+class MalSakunimeLinker {
+  constructor({ sakunimeProvider, malProvider, cacheTTL = 60 * 60 * 1000 } = {}) {
+    this.sakunime = sakunimeProvider;
+    this.mal = malProvider || new MyAnimeList({ cacheTTL });
+    this.cacheTTL = cacheTTL;
+    this.linkCache = new Map();
+  }
+
+  /**
+   * Resolve numeric MyAnimeList ID (e.g. 52991) to Sakunime anime slug (e.g. "hid~frieren-beyond-journeys-end-154587")
+   */
+  async resolveMalId(malId) {
+    const parsedId = parseInt(malId, 10);
+    if (!parsedId || parsedId <= 0 || String(malId).trim() !== String(parsedId)) {
+      throw new ScraperError('MyAnimeList ID must be a positive integer (e.g. 52991).', 400);
+    }
+
+    const now = Date.now();
+    if (this.cacheTTL > 0 && this.linkCache.has(parsedId)) {
+      const cached = this.linkCache.get(parsedId);
+      if (now - cached.timestamp < this.cacheTTL) {
+        return cached.data;
+      }
+      this.linkCache.delete(parsedId);
+    }
+
+    // 1. Fetch anime metadata from MyAnimeList
+    const malAnime = await this.mal.getAnimeById(parsedId);
+    const rawTitles = [
+      malAnime.title,
+      malAnime.titles?.default,
+      malAnime.titles?.english,
+      ...(malAnime.titles?.synonyms || [])
+    ].filter(Boolean);
+
+    const uniqueRawTitles = Array.from(new Set(rawTitles));
+    const titleFeatures = uniqueRawTitles.map((t) => parseTitleFeatures(t)).filter(Boolean);
+    const malYear = extractMalYear(malAnime);
+
+    const malProfile = {
+      id: parsedId,
+      title: malAnime.title,
+      englishTitle: malAnime.titles?.english || null,
+      type: malAnime.type || null,
+      year: malYear,
+      episodes: malAnime.episodes || null,
+      url: malAnime.url,
+      titleFeatures
+    };
+
+    // 2. Build search queries from MAL default & English titles
+    const searchQueries = new Set();
+    for (const feat of titleFeatures.slice(0, 2)) {
+      const qHead = feat.headTokens.slice(0, 5).join(' ');
+      if (qHead.length >= 2) searchQueries.add(qHead);
+      const qFull = feat.allTokens.slice(0, 6).join(' ');
+      if (qFull.length >= 2) searchQueries.add(qFull);
+    }
+
+    const candidatesMap = new Map();
+    const queryList = Array.from(searchQueries).slice(0, 3);
+    await Promise.all(
+      queryList.map(async (q) => {
+        try {
+          const searchRes = await this.sakunime.search(q);
+          for (const item of searchRes.data || []) {
+            if (item?.slug && !candidatesMap.has(item.slug)) {
+              candidatesMap.set(item.slug, item);
+            }
+          }
+        } catch {
+          // Ignore individual query failures
+        }
+      })
+    );
+
+    const serverBonus = (cand) => {
+      let bonus = 0;
+      if (cand.server === 'hid') bonus += 8;
+      else if (cand.server === 'sm') bonus += 2;
+      if (/-(?:batch|episode-\d+)/i.test(cand.slug || '')) bonus -= 25;
+      return bonus;
+    };
+
+    const rankCandidates = () => {
+      const scored = [];
+      for (const cand of candidatesMap.values()) {
+        const baseScore = scoreSokujaCandidate(malProfile, cand);
+        if (baseScore > 0) {
+          const totalScore = Math.round((baseScore + serverBonus(cand)) * 100) / 100;
+          scored.push({ ...cand, matchScore: totalScore });
+        }
+      }
+      scored.sort((a, b) => b.matchScore - a.matchScore);
+      return scored;
+    };
+
+    let ranked = rankCandidates();
+
+    // 3. Enrich top candidates with detail metadata (year, type, alternativeTitles) for accurate season/movie disambiguation
+    const topToEnrich = ranked.slice(0, 8).filter((c) => !c.year);
+    if (topToEnrich.length > 0) {
+      await Promise.all(
+        topToEnrich.map(async (cand) => {
+          try {
+            const detail = await this.sakunime.getAnimeDetail(cand.slug);
+            const mergedAlts = Array.from(
+              new Set([...(cand.alternativeTitles || []), ...(detail.alternativeTitles || [])].filter(Boolean))
+            );
+            candidatesMap.set(cand.slug, {
+              ...cand,
+              year: cand.year || detail.year || null,
+              type: cand.type || detail.type || null,
+              status: cand.status || detail.status || null,
+              alternativeTitles: mergedAlts
+            });
+          } catch {
+            // Skip if detail fetch fails
+          }
+        })
+      );
+      ranked = rankCandidates();
+    }
+
+    const best = ranked[0] || null;
+    const MIN_MATCH_SCORE = 62;
+
+    if (!best || best.matchScore < MIN_MATCH_SCORE) {
+      throw new ScraperError(
+        `Anime MyAnimeList ID ${parsedId} ("${malAnime.title}") not found / not yet available on Sakunime.`,
+        404
+      );
+    }
+
+    const confidence = Math.min(1, Math.max(0.5, Math.round((best.matchScore / 110) * 100) / 100));
+
+    const resolved = {
+      malId: parsedId,
+      slug: best.slug,
+      sakunimeUrl: best.url,
+      server: best.server || null,
+      confidence,
+      matchScore: best.matchScore,
+      mal: {
+        id: malAnime.id,
+        title: malAnime.title,
+        englishTitle: malAnime.titles?.english || null,
+        type: malAnime.type,
+        year: malYear,
+        premiered: malAnime.premiered,
+        episodes: malAnime.episodes,
+        score: malAnime.score,
+        url: malAnime.url
+      },
+      sakunime: {
+        slug: best.slug,
+        server: best.server || null,
+        title: best.title,
+        type: best.type,
+        status: best.status,
+        year: best.year,
+        url: best.url
+      },
+      alternatives: ranked.slice(1, 6).map((item) => ({
+        slug: item.slug,
+        server: item.server || null,
+        title: item.title,
+        type: item.type,
+        year: item.year,
+        matchScore: item.matchScore,
+        url: item.url
+      }))
+    };
+
+    if (this.cacheTTL > 0) {
+      if (this.linkCache.size > 500) {
+        const oldestKey = this.linkCache.keys().next().value;
+        this.linkCache.delete(oldestKey);
+      }
+      this.linkCache.set(parsedId, { data: resolved, timestamp: now });
+    }
+
+    return resolved;
+  }
+}
+
 module.exports = {
   MalSokujaLinker,
+  MalSakunimeLinker,
   parseTitleFeatures,
   scoreSokujaCandidate
 };

@@ -27,8 +27,11 @@ It features a unique **Cross-Provider Linker** that allows you to query streamin
   - [Sokuja ID Provider Endpoints](#sokuja-id-provider-endpoints)
     - [Direct MyAnimeList ID Access (Dual-Mode)](#direct-myanimelist-id-access-dual-mode)
     - [Native Sokuja Endpoints](#native-sokuja-endpoints)
+  - [Sakunime Provider Endpoints](#sakunime-provider-endpoints)
+    - [Prefixed Slugs & Multi-Server Architecture](#prefixed-slugs--multi-server-architecture)
+    - [Sakunime Endpoints & Dual-Mode MAL ID Access](#sakunime-endpoints--dual-mode-mal-id-access)
 - [Programmatic SDK Usage](#programmatic-sdk-usage)
-- [MAL-to-Sokuja Heuristic Linker](#mal-to-sokuja-heuristic-linker)
+- [Cross-Provider Heuristic Linker (MAL Bridge)](#cross-provider-heuristic-linker-mal-bridge)
 - [Error Handling & Standard Responses](#error-handling--standard-responses)
 - [License & Disclaimer](#license--disclaimer)
 
@@ -36,38 +39,38 @@ It features a unique **Cross-Provider Linker** that allows you to query streamin
 
 ## Overview & Architecture
 
-AnimaScraper bridges two anime data sources into a unified API:
+AnimaScraper bridges global metadata and multi-server streaming providers into a unified API:
 
 ```
-                      ┌────────────────────────────────────────┐
-                      │             Client Request             │
-                      └───────────────────┬────────────────────┘
-                                          │
-                   ┌──────────────────────┴──────────────────────┐
-                   │               Express Router                │
-                   ├─────────────────────────────┬───────────────┤
-                   ▼                             ▼               ▼
-         /api/v1/myanimelist              /api/v1/sokujaId    Web UI (/ & /docs)
-                   │                             │
-                   ▼                             ▼
-       ┌───────────────────────┐     ┌───────────────────────┐
-       │   MyAnimeList Engine  │     │   Sokuja ID Engine    │
-       │  (Scores, Synopsis,   │     │  (Streaming Mirrors,  │
-       │   Staff, Taxonomy)    │     │   Multi-res Downloads)│
-       └───────────┬───────────┘     └───────────┬───────────┘
-                   │                             │
-                   └──────────────┬──────────────┘
-                                  ▼
-                     ┌─────────────────────────┐
-                     │ MalSokujaLinker Bridge  │
-                     │  Heuristic Cross-Match  │
-                     │ (Dice Token Similarity) │
-                     └─────────────────────────┘
+                              ┌────────────────────────────────────────┐
+                              │             Client Request             │
+                              └───────────────────┬────────────────────┘
+                                                  │
+            ┌──────────────────────────┬──────────┴───────────────┬──────────────────┐
+            │                          │                          │                  │
+            ▼                          ▼                          ▼                  ▼
+  /api/v1/myanimelist          /api/v1/sokujaId           /api/v1/sakunime     Web UI (/ & /docs)
+            │                          │                          │
+            ▼                          ▼                          ▼
+┌───────────────────────┐  ┌───────────────────────┐  ┌───────────────────────┐
+│   MyAnimeList Engine  │  │   Sokuja ID Engine    │  │    Sakunime Engine    │
+│  (Scores, Synopsis,   │  │  (Streaming Mirrors,  │  │ (3-Server Aggregator, │
+│   Staff, Taxonomy)    │  │   Multi-res Downloads)│  │  HLS + AI Subtitles)  │
+└───────────┬───────────┘  └───────────┬───────────┘  └───────────┬───────────┘
+            │                          │                          │
+            └──────────────────────────┼──────────────────────────┘
+                                       ▼
+                        ┌─────────────────────────────┐
+                        │  Cross-Provider MAL Bridge  │
+                        │ MalSokujaLinker &           │
+                        │ MalSakunimeLinker           │
+                        └─────────────────────────────┘
 ```
 
 1. **MyAnimeList (`myanimelist`)**: Extracts comprehensive global anime metadata, official English & alternative titles, ratings, synopsis, ranked top lists, seasonal schedules, episode lists, character voice actors, user recommendations, and production studios.
 2. **Sokuja ID (`sokujaId`)**: Extracts Indonesian subtitled releases, multi-server streaming video embeds (`.mp4`), direct resolution download links (360p - 1080p), and weekly broadcast schedules.
-3. **MalSokujaLinker**: Bridges numeric MyAnimeList IDs (e.g., `52991` for *Sousou no Frieren*) directly into Sokuja streaming data using token similarity, Roman numeral detection, part/cour parsing, release year verification, and media type matching.
+3. **Sakunime (`sakunime`)**: Aggregates 3 upstream servers (`hid~` / `hi~` Server 1 with 1080p HLS `.m3u8` + AI Indonesian/English/multi-lang WebVTT subtitles & dubs, `sm~` Server 2 Samehadaku Sub Indo, and unprefixed Server 3 Otakudesu Sub Indo) with on-demand server stream resolution and multi-resolution downloads.
+4. **Cross-Provider MAL Bridge (`MalSokujaLinker` & `MalSakunimeLinker`)**: Bridges numeric MyAnimeList IDs (e.g., `52991` for *Sousou no Frieren*) directly into Sokuja ID and Sakunime streaming data using token similarity, Roman numeral detection, part/cour parsing, release year verification, and media type matching.
 
 ---
 
@@ -94,13 +97,15 @@ anima-scraper/
 │   └── logo.png                  # Project logo
 ├── routes/
 │   ├── myanimelist.js            # Express router for MyAnimeList endpoints
-│   └── sokujaId.js               # Express router for Sokuja ID endpoints
+│   ├── sokujaId.js               # Express router for Sokuja ID endpoints
+│   └── sakunime.js               # Express router for Sakunime endpoints
 └── scraper/
     ├── index.js                  # Unified AnimaScraper facade & factory
-    ├── malLinker.js              # Heuristic MAL-to-Sokuja title & season matcher
+    ├── malLinker.js              # Heuristic MAL-to-Sokuja & MAL-to-Sakunime matcher
     └── providers/
         ├── myanimelist.js        # MyAnimeList scraping engine & parser
-        └── sokujaId.js           # Sokuja ID scraping engine & RSC parser
+        ├── sokujaId.js           # Sokuja ID scraping engine & RSC parser
+        └── sakunime.js           # Sakunime multi-server JSON proxy scraper
 ```
 
 ---
@@ -287,6 +292,47 @@ You do **not** need to guess or scrape fansub title slugs. The Sokuja ID router 
 
 ---
 
+### Sakunime Provider Endpoints
+
+Base path: `/api/v1/sakunime`
+
+#### Prefixed Slugs & Multi-Server Architecture
+
+Sakunime (`https://sakunime.com`) aggregates three upstream streaming servers distinguished by slug prefixes:
+- **Server 1 (`hid~` / `hi~`)**: e.g. `hid~frieren-beyond-journeys-end-154587` — 1080p HLS `.m3u8` master playlists, Sakunime HLS proxy URLs, WebVTT subtitles (`Indonesia (AI)`, `English`, etc.), iframe fallbacks, and English Dub options.
+- **Server 2 (`sm~`)**: e.g. `sm~sousou-no-frieren` — Samehadaku Indonesian subtitled embeds and multi-resolution cloud downloads.
+- **Server 3 (unprefixed)**: e.g. `frieren-sub-indo` — Otakudesu Indonesian subtitled embeds and downloads.
+
+Catalog and search endpoints accept an optional `?server=` query filter (`all`, `hid`, `sm`, `otaku`).
+
+#### Sakunime Endpoints & Dual-Mode MAL ID Access
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/sakunime/anime/:idOrSlug` | Anime detail by prefixed slug (e.g. `hid~frieren-beyond-journeys-end-154587`) or MAL ID (`52991`) |
+| `GET` | `/api/v1/sakunime/anime/:idOrSlug/episodes` | Paginated & sortable episode list (`?page=1&limit=100&order=asc`) |
+| `GET` | `/api/v1/sakunime/anime/:idOrSlug/episode/:number` | **Fetch HLS stream, subtitles, mirrors & downloads** (`?type=sub\|dub`) |
+| `GET` | `/api/v1/sakunime/anime/:idOrSlug/recommendations` | Related / recommended anime |
+| `GET` | `/api/v1/sakunime/episode/:episodeSlug` | Episode stream by episode slug (e.g. `hid~frieren-beyond-journeys-end-154587~1~1`; alias `/watch/:slug`) |
+| `GET` | `/api/v1/sakunime/server/:serverId` | Resolve individual server ID (`hie~...`, `sms~...`, or Server 3 ID) to playable URL |
+| `GET` | `/api/v1/sakunime/:malId` | Direct Dual-Mode anime detail via numeric MAL ID (e.g. `/52991`) |
+| `GET` | `/api/v1/sakunime/:malId/episode/:number` | Direct Dual-Mode episode stream via numeric MAL ID (e.g. `/52991/episode/1`) |
+| `GET` | `/api/v1/sakunime/resolve/:malId` | Resolve numeric MAL ID to Sakunime slug with confidence & server alternatives |
+| `GET` | `/api/v1/sakunime/home?page=1&server=all` | Homepage featured hero, latest releases, ongoing, completed, popular & genres |
+| `GET` | `/api/v1/sakunime/latest?page=1` | Paginated latest episode updates |
+| `GET` | `/api/v1/sakunime/search?q=:query&server=all` | Multi-server keyword search |
+| `GET` | `/api/v1/sakunime/browse?...` | Filter catalog by `genre`, `status`, `type`, `order`, `server`, and `page` |
+| `GET` | `/api/v1/sakunime/ongoing?page=1&server=all` | Ongoing anime across Sakunime servers |
+| `GET` | `/api/v1/sakunime/completed?page=1&server=all` | Completed anime catalog |
+| `GET` | `/api/v1/sakunime/movies?page=1` | Anime movies catalog |
+| `GET` | `/api/v1/sakunime/top?type=popular&page=1` | Top / popular anime (`popular`, `score`, `ongoing`, `movie`) |
+| `GET` | `/api/v1/sakunime/anime-list?letter=S` | Alphabetical A-Z directory |
+| `GET` | `/api/v1/sakunime/schedule?day=friday` | Merged 3-server weekly broadcast schedule |
+| `GET` | `/api/v1/sakunime/genres` | Unified genre taxonomy list |
+| `GET` | `/api/v1/sakunime/genre/:slug?page=1&server=all` | Anime catalog filtered by genre slug |
+
+---
+
 ## Programmatic SDK Usage
 
 You can use the scraper directly in Node.js scripts without starting the HTTP server:
@@ -302,12 +348,17 @@ async function main() {
 
   // 2. Initialize Sokuja ID provider
   const sokuja = new AnimaScraper({ provider: 'sokujaId' });
-
-  // Direct episode lookup via MyAnimeList ID:
   const streamData = await sokuja.getAnimeEpisode(52991, 28);
-  console.log(`Episode: ${streamData.title}`);
-  console.log('Video Mirrors:', streamData.streaming.mirrors);
-  console.log('Download Options:', streamData.downloads);
+  console.log(`Sokuja Episode: ${streamData.title}`);
+
+  // 3. Initialize Sakunime provider (Prefixed Slugs & Multi-Server HLS)
+  const sakunime = new AnimaScraper({ provider: 'sakunime' });
+  const sakuAnime = await sakunime.getAnimeDetail('hid~frieren-beyond-journeys-end-154587');
+  console.log(`Sakunime: ${sakuAnime.title} (${sakuAnime.episodeCount} eps)`);
+
+  const sakuStream = await sakunime.getAnimeEpisode('hid~frieren-beyond-journeys-end-154587', 1);
+  console.log('HLS Master Playlist:', sakuStream.hlsUrl);
+  console.log('Subtitles:', sakuStream.subtitles.slice(0, 3));
 }
 
 main().catch(console.error);
@@ -315,9 +366,9 @@ main().catch(console.error);
 
 ---
 
-## MAL-to-Sokuja Heuristic Linker
+## Cross-Provider Heuristic Linker (MAL Bridge)
 
-When you make a request to `/api/v1/sokujaId/:malId`:
+When you make a request to `/api/v1/sokujaId/:malId` or `/api/v1/sakunime/:malId`:
 
 1. **Metadata Acquisition**: AnimaScraper fetches title variations (canonical, English, synonyms), release year, media format, and episode count from MyAnimeList.
 2. **Title Normalization**:

@@ -1,10 +1,12 @@
 const { MyAnimeList, ScraperError } = require('./providers/myanimelist');
 const { SokujaId } = require('./providers/sokujaId');
-const { MalSokujaLinker } = require('./malLinker');
+const { Sakunime } = require('./providers/sakunime');
+const { MalSokujaLinker, MalSakunimeLinker } = require('./malLinker');
 
 const PROVIDERS = {
   myanimelist: MyAnimeList,
-  sokujaId: SokujaId
+  sokujaId: SokujaId,
+  sakunime: Sakunime
 };
 
 function AnimaScraper(options = {}) {
@@ -93,12 +95,12 @@ AnimaScraper.prototype.getAnimeByMalId = function getAnimeByMalId(malId) {
   return this._callProvider('getAnimeByMalId', [malId]);
 };
 
-AnimaScraper.prototype.getAnimeEpisode = function getAnimeEpisode(idOrSlug, episodeNumber) {
-  return this._callProvider('getAnimeEpisode', [idOrSlug, episodeNumber]);
+AnimaScraper.prototype.getAnimeEpisode = function getAnimeEpisode(idOrSlug, episodeNumber, options) {
+  return this._callProvider('getAnimeEpisode', [idOrSlug, episodeNumber, options]);
 };
 
-AnimaScraper.prototype.getEpisodeByMalId = function getEpisodeByMalId(malId, episodeNumber) {
-  return this._callProvider('getEpisodeByMalId', [malId, episodeNumber]);
+AnimaScraper.prototype.getEpisodeByMalId = function getEpisodeByMalId(malId, episodeNumber, options) {
+  return this._callProvider('getEpisodeByMalId', [malId, episodeNumber, options]);
 };
 
 AnimaScraper.prototype.getAnimeById = function getAnimeById(idOrSlug) {
@@ -121,8 +123,12 @@ AnimaScraper.prototype.getAnimeRecommendations = function getAnimeRecommendation
   return this._callProvider('getAnimeRecommendations', [idOrSlug]);
 };
 
-AnimaScraper.prototype.getEpisodeDetail = function getEpisodeDetail(episodeSlug) {
-  return this._callProvider('getEpisodeDetail', [episodeSlug]);
+AnimaScraper.prototype.getEpisodeDetail = function getEpisodeDetail(episodeSlug, options) {
+  return this._callProvider('getEpisodeDetail', [episodeSlug, options]);
+};
+
+AnimaScraper.prototype.getServerUrl = function getServerUrl(serverId) {
+  return this._callProvider('getServerUrl', [serverId]);
 };
 
 AnimaScraper.prototype.getGenres = function getGenres() {
@@ -157,6 +163,8 @@ module.exports = {
   AnimaScraper,
   MyAnimeList,
   SokujaId,
+  Sakunime,
   MalSokujaLinker,
+  MalSakunimeLinker,
   ScraperError
 };

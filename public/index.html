@@ -311,12 +311,22 @@
                 <span class="font-mono text-xs text-ember-500">GET</span>
                 <span>/api/v1/sokujaId</span>
               </a>
+
+              <a
+                href="/api/v1/sakunime"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-semibold text-sm border bg-canvas-50 text-abyss-900 border-canvas-300 hover:border-ember-400 hover:text-ember-600 dark:bg-abyss-900/80 dark:text-abyss-100 dark:border-abyss-700 dark:hover:border-ember-500/60 dark:hover:text-ember-300 transition-all duration-300"
+              >
+                <span class="font-mono text-xs text-ember-500">GET</span>
+                <span>/api/v1/sakunime</span>
+              </a>
             </div>
 
             <!-- Compact Key Metrics -->
             <div class="pt-4 grid grid-cols-3 gap-4 max-w-lg border-t border-canvas-300/80 dark:border-abyss-800">
               <div>
-                <div class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50">12<span class="text-ember-500">+</span></div>
+                <div class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50">50<span class="text-ember-500">+</span></div>
                 <div class="text-xs font-medium text-abyss-500 dark:text-abyss-300">REST v1 Routes</div>
               </div>
               <div>
@@ -657,6 +667,29 @@
           }
         },
         {
+          id: 'sakunime-slug',
+          label: 'GET /sakunime',
+          shortPath: '/api/v1/sakunime/anime/hid~frieren...',
+          endpoint: '/api/v1/sakunime/anime/hid~frieren-beyond-journeys-end-154587',
+          latency: '~175ms',
+          preview: {
+            status: 'success',
+            provider: 'sakunime',
+            data: {
+              slug: 'hid~frieren-beyond-journeys-end-154587',
+              server: 'hid',
+              anilistId: 154587,
+              title: 'Sousou no Frieren',
+              englishTitle: 'Frieren: Beyond Journey’s End',
+              type: 'TV',
+              status: 'Completed',
+              score: 9.1,
+              episodeCount: 28,
+              url: 'https://sakunime.com/anime/hid~frieren-beyond-journeys-end-154587'
+            }
+          }
+        },
+        {
           id: 'info',
           label: 'GET /info',
           shortPath: '/api/v1/info',
@@ -666,7 +699,7 @@
             project: 'anima-scraper',
             version: '1.0.0',
             description: 'Anime Scraper Service',
-            providers: ['myanimelist', 'sokujaId']
+            providers: ['myanimelist', 'sokujaId', 'sakunime']
           }
         }
       ];

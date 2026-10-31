@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AnimaScraper Documentation — High-Speed Anime Metadata & Streaming API</title>
-  <meta name="description" content="Official AnimaScraper documentation: setup guide, Node.js SDK reference, REST API for MyAnimeList & SokujaId, and automated MAL ID bridging." />
+  <meta name="description" content="Official AnimaScraper documentation: setup guide, Node.js SDK reference, REST API for MyAnimeList, SokujaId & Sakunime, and automated MAL ID bridging." />
   <link rel="icon" type="image/png" href="/logo.png" />
 
   <!-- Prevent theme flash & set default language -->
@@ -428,11 +428,28 @@
           </ul>
         </div>
 
-        <!-- Group 5: MAL-to-Sokuja Linker -->
+        <!-- Group 5: Sakunime Provider -->
+        <div>
+          <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-ember-500"></span>
+            Sakunime (Multi-Server & HLS)
+          </h3>
+          <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
+            <li><a href="#sakunime-slugs" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Prefixed Slugs (hid~) & MAL ID</span><span x-show="lang === 'id'" x-cloak>Slug Berawalan (hid~) & MAL ID</span></a></li>
+            <li><a href="#sakunime-home" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Home & Latest Updates</span><span x-show="lang === 'id'" x-cloak>Beranda & Update Terbaru</span></a></li>
+            <li><a href="#sakunime-search" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Multi-Server Search & Browse</span><span x-show="lang === 'id'" x-cloak>Pencarian & Filter Multi-Server</span></a></li>
+            <li><a href="#sakunime-detail" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Detail Anime & Episodes</span><span x-show="lang === 'id'" x-cloak>Detail Anime & Episode</span></a></li>
+            <li><a href="#sakunime-stream" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">HLS Stream, Subtitles & Download</span><span x-show="lang === 'id'" x-cloak>Streaming HLS, Subtitle & Unduhan</span></a></li>
+            <li><a href="#sakunime-server" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Server Stream Resolver</span><span x-show="lang === 'id'" x-cloak>Resolver Server Player</span></a></li>
+            <li><a href="#sakunime-schedule" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Schedule & Genres</span><span x-show="lang === 'id'" x-cloak>Jadwal Rilis & Genre</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Group 6: Cross-Provider MAL Linker -->
         <div>
           <h3 class="font-display text-xs font-bold uppercase tracking-wider text-ember-600 dark:text-ember-400 mb-2 flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            MAL-to-Sokuja Bridge
+            Cross-Provider MAL Bridge
           </h3>
           <ul class="space-y-1 pl-2 border-l border-canvas-300/80 dark:border-abyss-800/80 font-medium">
             <li><a href="#mal-linker" @click="sidebarOpen = false" class="block py-1 text-xs hover:text-ember-500 dark:hover:text-ember-400 transition-colors"><span x-show="lang === 'en'">Smart Matching Algorithm</span><span x-show="lang === 'id'" x-cloak>Algoritma Smart Matching</span></a></li>
@@ -471,10 +488,10 @@
         </h1>
         <p class="mt-4 text-base sm:text-lg text-abyss-600 dark:text-abyss-300 leading-relaxed">
           <span x-show="lang === 'en'">
-            Official developer documentation for AnimaScraper: high-speed anime metadata and video streaming aggregator. Featuring complete <strong class="text-ember-500">MyAnimeList</strong> global metadata, <strong class="text-ember-500">Sokuja ID</strong> Indonesian subtitled video streams & direct downloads, plus automated bridging via MyAnimeList Numeric IDs.
+            Official developer documentation for AnimaScraper: high-speed anime metadata and video streaming aggregator. Featuring complete <strong class="text-ember-500">MyAnimeList</strong> global metadata, <strong class="text-ember-500">Sokuja ID</strong> &amp; <strong class="text-ember-500">Sakunime</strong> multi-server video streams (HLS &amp; Embed), multi-language subtitles &amp; direct downloads, plus automated bridging via MyAnimeList Numeric IDs.
           </span>
           <span x-show="lang === 'id'" x-cloak>
-            Dokumentasi resmi untuk Node.js library dan REST API service anime scraper berkecepatan tinggi. Mendukung metadata lengkap dari <strong class="text-ember-500">MyAnimeList</strong>, streaming video multi-server & unduhan Subtitle Indonesia dari <strong class="text-ember-500">Sokuja ID</strong>, serta bridging otomatis menggunakan MyAnimeList Numeric ID.
+            Dokumentasi resmi untuk Node.js library dan REST API service anime scraper berkecepatan tinggi. Mendukung metadata lengkap dari <strong class="text-ember-500">MyAnimeList</strong>, streaming video multi-server (HLS &amp; Embed) serta unduhan Subtitle Indonesia dari <strong class="text-ember-500">Sokuja ID</strong> dan <strong class="text-ember-500">Sakunime</strong>, dilengkapi bridging otomatis menggunakan MyAnimeList Numeric ID.
           </span>
         </p>
 
@@ -528,7 +545,7 @@
             <span class="text-ember-500">Node.js + Cheerio Engine</span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-center text-xs font-mono">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-center text-xs font-mono">
             <div class="p-3.5 rounded-xl border border-canvas-300 dark:border-terminal-border bg-canvas-200/50 dark:bg-terminal-header">
               <span class="text-blue-500 font-bold block mb-1">MyAnimeList Provider</span>
               <p class="text-abyss-600 dark:text-abyss-400 text-[11px]">
@@ -537,19 +554,24 @@
               </p>
             </div>
             <div class="p-3.5 rounded-xl border border-ember-500/40 bg-ember-500/5 dark:bg-ember-500/10 relative">
-              <span class="text-ember-500 font-bold block mb-1">MalSokujaLinker</span>
+              <span class="text-ember-500 font-bold block mb-1">MAL Linker Bridge</span>
               <p class="text-abyss-600 dark:text-abyss-400 text-[11px]">
-                <span x-show="lang === 'en'">Heuristic title normalization, Roman numeral detection & fuzzy cross-matching bridge.</span>
-                <span x-show="lang === 'id'" x-cloak>Normalisasi judul heuristik, deteksi angka romawi & penghubung fuzzy cross-matching.</span>
+                <span x-show="lang === 'en'">Heuristic title normalization, Roman numeral detection &amp; fuzzy cross-matching to Sokuja &amp; Sakunime.</span>
+                <span x-show="lang === 'id'" x-cloak>Normalisasi judul heuristik, deteksi angka romawi &amp; jembatan otomatis ke Sokuja &amp; Sakunime.</span>
               </p>
-              <div class="hidden md:block absolute -left-2 top-1/2 -translate-y-1/2 text-ember-500">↔</div>
-              <div class="hidden md:block absolute -right-2 top-1/2 -translate-y-1/2 text-ember-500">↔</div>
             </div>
             <div class="p-3.5 rounded-xl border border-canvas-300 dark:border-terminal-border bg-canvas-200/50 dark:bg-terminal-header">
               <span class="text-emerald-500 font-bold block mb-1">Sokuja ID Provider</span>
               <p class="text-abyss-600 dark:text-abyss-400 text-[11px]">
-                <span x-show="lang === 'en'">Multi-server video embed streaming & direct download links grouped by resolution (360p - 1080p).</span>
-                <span x-show="lang === 'id'" x-cloak>Streaming embed video multi-mirror & tautan unduhan langsung per resolusi (360p - 1080p).</span>
+                <span x-show="lang === 'en'">Multi-server video embed streaming &amp; direct download links grouped by resolution (360p - 1080p).</span>
+                <span x-show="lang === 'id'" x-cloak>Streaming embed video multi-mirror &amp; tautan unduhan langsung per resolusi (360p - 1080p).</span>
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl border border-canvas-300 dark:border-terminal-border bg-canvas-200/50 dark:bg-terminal-header">
+              <span class="text-ember-400 font-bold block mb-1">Sakunime Provider</span>
+              <p class="text-abyss-600 dark:text-abyss-400 text-[11px]">
+                <span x-show="lang === 'en'">3-Server aggregator (<code class="text-ember-400">hid~</code>, <code class="text-ember-400">sm~</code>, <code class="text-ember-400">otaku</code>) with 1080p HLS, AI Indo/Eng subtitles &amp; downloads.</span>
+                <span x-show="lang === 'id'" x-cloak>Agregator 3 server (<code class="text-ember-400">hid~</code>, <code class="text-ember-400">sm~</code>, <code class="text-ember-400">otaku</code>) dengan HLS 1080p, subtitle Indo/Eng &amp; unduhan.</span>
               </p>
             </div>
           </div>
@@ -715,7 +737,10 @@ curl http://localhost:3000/health
 curl "http://localhost:3000/api/v1/myanimelist/search?q=frieren&page=1"
 
 # 3. Stream & download episode 1 directly using MAL ID (52991)
-curl http://localhost:3000/api/v1/sokujaId/52991/episode/1</code></pre>
+curl http://localhost:3000/api/v1/sokujaId/52991/episode/1
+
+# 4. Query Sakunime using prefixed slug (hid~) or MAL ID
+curl http://localhost:3000/api/v1/sakunime/anime/hid~frieren-beyond-journeys-end-154587</code></pre>
           </div>
 
           <!-- Method B: Node.js SDK Library -->
@@ -737,9 +762,13 @@ async function main() {
 
   // Initialize Sokuja ID provider
   const sokuja = new AnimaScraper({ provider: 'sokujaId' });
-  // Fetch stream for episode 1 directly using MAL ID 52991!
   const episodeStream = await sokuja.getEpisodeByMalId(52991, 1);
-  console.log('Video Player:', episodeStream.defaultStreamUrl);
+  console.log('Sokuja Player:', episodeStream.defaultStreamUrl);
+
+  // Initialize Sakunime provider (Prefixed Slugs & Multi-Server HLS)
+  const sakunime = new AnimaScraper({ provider: 'sakunime' });
+  const sakuEp = await sakunime.getAnimeEpisode('hid~frieren-beyond-journeys-end-154587', 1);
+  console.log('Sakunime HLS:', sakuEp.hlsUrl, 'Subtitles:', sakuEp.subtitles.length);
 }
 
 main().catch(console.error);</code></pre>
@@ -761,21 +790,23 @@ main().catch(console.error);</code></pre>
 
         <div class="p-4 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg font-mono text-xs text-abyss-800 dark:text-abyss-200">
 <pre class="!border-0 !p-0">anima-scraper/
-├── index.js                     # Express entry point, routing & global error handling
-├── package.json                 # npm dependencies (express, cheerio) & run scripts
+├── index.js                     # Express entry point, routing &amp; global error handling
+├── package.json                 # npm dependencies (express, cheerio) &amp; run scripts
 ├── routes/                      # Express route controllers
 │   ├── myanimelist.js           # MyAnimeList REST API endpoints (/api/v1/myanimelist)
-│   └── sokujaId.js              # Sokuja ID REST API endpoints (/api/v1/sokujaId)
-├── scraper/                     # Core Scraping Engine & Library SDK
-│   ├── index.js                 # Unified AnimaScraper class & factory exports
-│   ├── malLinker.js             # MalSokujaLinker (fuzzy title & season matching)
+│   ├── sokujaId.js              # Sokuja ID REST API endpoints (/api/v1/sokujaId)
+│   └── sakunime.js              # Sakunime REST API endpoints (/api/v1/sakunime)
+├── scraper/                     # Core Scraping Engine &amp; Library SDK
+│   ├── index.js                 # Unified AnimaScraper class &amp; factory exports
+│   ├── malLinker.js             # MalSokujaLinker &amp; MalSakunimeLinker (fuzzy title/season matching)
 │   └── providers/               # Provider-specific scraper implementations
 │       ├── myanimelist.js       # Cheerio HTML parser for MyAnimeList.net
-│       └── sokujaId.js          # Cheerio & Next.js Flight parser for Sokuja ID
-└── public/                      # Static web assets & documentation UI
-    ├── index.html               # Interactive Landing Page & Hero Console
+│       ├── sokujaId.js          # Cheerio &amp; Next.js Flight parser for Sokuja ID
+│       └── sakunime.js          # Multi-server JSON proxy scraper for Sakunime.com
+└── public/                      # Static web assets &amp; documentation UI
+    ├── index.html               # Interactive Landing Page &amp; Hero Console
     ├── docs.html                # Official Documentation Page (/docs)
-    └── logo.png                 # Mascot & Logo Asset</pre>
+    └── logo.png                 # Mascot &amp; Logo Asset</pre>
         </div>
       </section>
 
@@ -803,29 +834,26 @@ main().catch(console.error);</code></pre>
 const mal = new AnimaScraper({ provider: 'myanimelist' });
 
 // Sokuja ID Provider
-const sokuja = new AnimaScraper({ provider: 'sokujaId' });</code></pre>
+const sokuja = new AnimaScraper({ provider: 'sokujaId' });
+
+// Sakunime Provider
+const sakunime = new AnimaScraper({ provider: 'sakunime' });</code></pre>
 
           <h3 id="sdk-classes" class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100 pt-2">
             <span x-show="lang === 'en'">2. Using Direct Provider Classes</span>
             <span x-show="lang === 'id'" x-cloak>2. Menggunakan Direct Provider Classes</span>
           </h3>
-          <pre><code class="language-javascript">const { MyAnimeList, SokujaId, MalSokujaLinker } = require('./scraper');
+          <pre><code class="language-javascript">const { MyAnimeList, SokujaId, Sakunime, MalSokujaLinker, MalSakunimeLinker } = require('./scraper');
 
-// Custom instance with specific options
-const malDirect = new MyAnimeList({
-  baseUrl: 'https://myanimelist.net',
-  timeout: 15000
-});
+// Custom instances with specific options
+const malDirect = new MyAnimeList({ baseUrl: 'https://myanimelist.net', timeout: 15000 });
+const sokujaDirect = new SokujaId({ baseUrl: 'https://x6.sokuja.uk', timeout: 15000 });
+const sakunimeDirect = new Sakunime({ baseUrl: 'https://sakunime.com', timeout: 20000 });
 
-const sokujaDirect = new SokujaId({
-  baseUrl: 'https://sokuja.id',
-  timeout: 15000
-});
-
-// Custom linker instance
-const linker = new MalSokujaLinker(sokujaDirect, malDirect);
-const matchResult = await linker.findSokujaMatch(52991);
-console.log(matchResult.matchedSlug); // 'sousou-no-frieren-subtitle-indonesia'</code></pre>
+// Direct MAL-to-Sakunime resolution
+const sakuLinker = new MalSakunimeLinker({ sakunimeProvider: sakunimeDirect, malProvider: malDirect });
+const resolved = await sakuLinker.resolveMalId(52991);
+console.log(resolved.slug); // 'hid~frieren-beyond-journeys-end-154587'</code></pre>
 
           <h3 id="sdk-errors" class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100 pt-2">
             <span x-show="lang === 'en'">3. Error Handling with ScraperError</span>
@@ -1260,7 +1288,200 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
       </section>
 
       <!-- ======================================================== -->
-      <!-- SECTION 9: MAL-TO-SOKUJA BRIDGE -->
+      <!-- SECTION 9: SAKUNIME PROVIDER REFERENCE -->
+      <!-- ======================================================== -->
+      <section id="sakunime-reference" class="scroll-mt-24 space-y-8">
+        <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-ember-500/10 text-ember-500 border border-ember-500/30">Provider: Sakunime</span>
+            <span class="text-xs font-mono text-abyss-400">Base: /api/v1/sakunime</span>
+          </div>
+          <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">9</span>
+            <span>Sakunime Reference (Multi-Server, HLS &amp; Multi-Sub)</span>
+          </h2>
+        </div>
+
+        <!-- 9.1 Prefixed Slugs & Dual-Mode -->
+        <div id="sakunime-slugs" class="scroll-mt-24 p-5 rounded-2xl border border-ember-500/30 bg-ember-500/5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-ember-500 text-pure-light" x-text="lang === 'en' ? 'MULTI-SERVER PREFIXED SLUGS & DUAL-MODE' : 'SLUG BERAWALAN MULTI-SERVER & DUAL-MODE'">MULTI-SERVER PREFIXED SLUGS &amp; DUAL-MODE</span>
+            <span class="text-xs font-mono font-semibold text-ember-600 dark:text-ember-400">sakunime.com</span>
+          </div>
+          <p class="text-xs sm:text-sm text-abyss-700 dark:text-abyss-300 leading-relaxed">
+            <span x-show="lang === 'en'">
+              Sakunime aggregates <strong>3 upstream servers</strong> distinguished by slug prefixes (e.g. <code class="font-mono text-xs text-ember-500">hid~frieren-beyond-journeys-end-154587</code>). Just like Sokuja ID, you can query Sakunime using its native prefixed slugs <strong>OR</strong> directly via numeric MyAnimeList IDs!
+            </span>
+            <span x-show="lang === 'id'" x-cloak>
+              Sakunime menggabungkan <strong>3 server upstream</strong> yang dibedakan melalui awalan slug (contoh: <code class="font-mono text-xs text-ember-500">hid~frieren-beyond-journeys-end-154587</code>). Sama seperti Sokuja ID, Anda bisa memanggil Sakunime memakai slug berawalan aslinya <strong>ATAU</strong> langsung menggunakan ID numerik MyAnimeList!
+            </span>
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
+            <div class="p-3 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg">
+              <span class="text-ember-500 font-bold block mb-1">Server 1 (hid~ / hi~)</span>
+              <code class="text-abyss-800 dark:text-abyss-200 block break-all">hid~frieren-beyond-journeys-end-154587</code>
+              <span class="text-[11px] text-abyss-500 block mt-1" x-text="lang === 'en' ? '1080p HLS + Sub Indo (AI), Eng & Dub' : 'HLS 1080p + Sub Indo (AI), Eng & Dub'"></span>
+            </div>
+            <div class="p-3 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg">
+              <span class="text-ember-400 font-bold block mb-1">Server 2 (sm~)</span>
+              <code class="text-abyss-800 dark:text-abyss-200 block break-all">sm~sousou-no-frieren</code>
+              <span class="text-[11px] text-abyss-500 block mt-1" x-text="lang === 'en' ? 'Samehadaku Sub Indo + Multi-Res DL' : 'Samehadaku Sub Indo + Unduhan Multi-Res'"></span>
+            </div>
+            <div class="p-3 rounded-xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-terminal-bg">
+              <span class="text-abyss-400 font-bold block mb-1" x-text="lang === 'en' ? 'Server 3 (Unprefixed) / MAL ID' : 'Server 3 (Tanpa Awalan) / MAL ID'">Server 3 / MAL ID</span>
+              <code class="text-abyss-800 dark:text-abyss-200 block break-all">frieren-sub-indo / 52991</code>
+              <span class="text-[11px] text-abyss-500 block mt-1" x-text="lang === 'en' ? 'Otakudesu Sub Indo or Direct MAL ID' : 'Otakudesu Sub Indo atau MAL ID Langsung'"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9.2 Home & Latest -->
+        <div id="sakunime-home" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/home</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sakunime.getHome({ page, server })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Aggregates Sakunime homepage sections: featured hero items, latest episode releases (<code class="font-mono">/latest</code>), ongoing anime, completed catalog, popular series, and unified genres.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengambil beranda gabungan Sakunime: hero unggulan, rilisan episode terbaru (<code class="font-mono">/latest</code>), anime ongoing, katalog tamat, populer, serta daftar genre gabungan.</span>
+          </p>
+
+          <pre><code class="language-bash">curl "http://localhost:3000/api/v1/sakunime/home?server=all"
+curl "http://localhost:3000/api/v1/sakunime/latest?page=1"</code></pre>
+        </div>
+
+        <!-- 9.3 Multi-Server Search & Browse -->
+        <div id="sakunime-search" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/search</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sakunime.search(query, { server })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Searches across all 3 Sakunime servers concurrently, or filters results to a specific server (<code class="font-mono text-ember-500">all</code>, <code class="font-mono text-ember-500">hid</code>, <code class="font-mono text-ember-500">sm</code>, or <code class="font-mono text-ember-500">otaku</code>).</span>
+            <span x-show="lang === 'id'" x-cloak>Mencari judul anime di 3 server Sakunime sekaligus, atau memfilter ke salah satu server (<code class="font-mono text-ember-500">all</code>, <code class="font-mono text-ember-500">hid</code>, <code class="font-mono text-ember-500">sm</code>, atau <code class="font-mono text-ember-500">otaku</code>).</span>
+          </p>
+
+          <pre><code class="language-bash"># Search across all Sakunime servers
+curl "http://localhost:3000/api/v1/sakunime/search?q=frieren&server=all"
+
+# Browse catalog by genre, status, server & sort order
+curl "http://localhost:3000/api/v1/sakunime/browse?genre=fantasy&status=completed&order=score&server=all"</code></pre>
+        </div>
+
+        <!-- 9.4 Detail Anime & Episodes -->
+        <div id="sakunime-detail" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/anime/:idOrSlug</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sakunime.getAnimeDetail(idOrSlug)</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Fetches complete anime metadata (Romaji &amp; English titles, AniList ID, poster &amp; banner, studios, score, synopsis, genres, and watchable episode list) by Sakunime slug or numeric MAL ID.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengambil metadata lengkap anime (judul Romaji &amp; Inggris, AniList ID, poster &amp; banner, studio, skor, sinopsis, genre, serta daftar episode lengkap) melalui slug Sakunime maupun MAL ID numerik.</span>
+          </p>
+
+          <pre><code class="language-bash"># Using Sakunime prefixed slug
+curl "http://localhost:3000/api/v1/sakunime/anime/hid~frieren-beyond-journeys-end-154587"
+
+# Paginated episodes list (asc / desc)
+curl "http://localhost:3000/api/v1/sakunime/anime/hid~frieren-beyond-journeys-end-154587/episodes?page=1&limit=50&order=asc"
+
+# Or directly via MyAnimeList Numeric ID!
+curl "http://localhost:3000/api/v1/sakunime/52991"</code></pre>
+        </div>
+
+        <!-- 9.5 Streaming HLS, Subtitles & Downloads -->
+        <div id="sakunime-stream" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/anime/:idOrSlug/episode/:number</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sakunime.getAnimeEpisode(idOrSlug, number, { type })</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400 leading-relaxed">
+            <span x-show="lang === 'en'">Extracts direct HLS master playlists (<code class="font-mono">.m3u8</code>), Sakunime HLS proxy URLs, iframe embed players, WebVTT subtitle tracks (Indonesian AI, English, Arabic, Spanish, etc.), alternative server IDs (<code class="font-mono">sub</code> &amp; <code class="font-mono">dub</code>), and multi-resolution downloads.</span>
+            <span x-show="lang === 'id'" x-cloak>Mengekstrak playlist utama HLS (<code class="font-mono">.m3u8</code>), URL proxy HLS Sakunime, iframe embed player, file subtitle WebVTT (Indonesia AI, Inggris, Arab, Spanyol, dll.), daftar server alternatif (<code class="font-mono">sub</code> &amp; <code class="font-mono">dub</code>), serta link unduhan multi-resolusi.</span>
+          </p>
+
+          <pre><code class="language-bash"># Stream Episode 1 via Sakunime anime slug (optional ?type=sub or ?type=dub)
+curl "http://localhost:3000/api/v1/sakunime/anime/hid~frieren-beyond-journeys-end-154587/episode/1?type=sub"
+
+# Stream via Sakunime watch episode slug
+curl "http://localhost:3000/api/v1/sakunime/watch/hid~frieren-beyond-journeys-end-154587~1~1"
+
+# Stream directly via MAL ID (52991) + Episode Number
+curl "http://localhost:3000/api/v1/sakunime/52991/episode/1"</code></pre>
+        </div>
+
+        <!-- 9.6 Server Stream Resolver -->
+        <div id="sakunime-server" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/server/:serverId</code>
+            </div>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sakunime.getServerUrl(serverId)</code></span>
+          </div>
+
+          <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
+            <span x-show="lang === 'en'">Resolves any individual <code class="font-mono text-ember-500">serverId</code> returned in episode details (<code class="font-mono">hie~...</code> for Server 1, <code class="font-mono">sms~...</code> for Server 2, or raw ID for Server 3) into a fresh playable stream URL and subtitle list.</span>
+            <span x-show="lang === 'id'" x-cloak>Menerjemahkan <code class="font-mono text-ember-500">serverId</code> individual dari detail episode (<code class="font-mono">hie~...</code> untuk Server 1, <code class="font-mono">sms~...</code> untuk Server 2, atau ID Server 3) menjadi URL player aktif beserta daftar subtitle.</span>
+          </p>
+
+          <pre><code class="language-bash">curl "http://localhost:3000/api/v1/sakunime/server/hie~frieren-beyond-journeys-end-154587~1~megaplay~sub"</code></pre>
+        </div>
+
+        <!-- 9.7 Schedule & Genres -->
+        <div id="sakunime-schedule" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
+          <h3 class="font-display font-bold text-sm text-abyss-900 dark:text-abyss-100">
+            <span x-show="lang === 'en'">Sakunime Schedule, Catalog &amp; Genre Endpoints</span>
+            <span x-show="lang === 'id'" x-cloak>Endpoint Jadwal Rilis, Katalog &amp; Genre Sakunime</span>
+          </h3>
+          <ul class="space-y-2 text-xs font-mono">
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/schedule?day=friday</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Merged 3-server broadcast schedule (monday..sunday / senin..minggu)' : 'Jadwal rilis gabungan 3 server (monday..sunday / senin..minggu)'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/ongoing?page=1&amp;server=all</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Ongoing anime across all servers (all, hid, sm, otaku)' : 'Daftar anime ongoing lintas server (all, hid, sm, otaku)'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/completed?page=1&amp;server=all</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Completed anime catalog' : 'Katalog anime tamat'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/movies?page=1</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Anime movies catalog' : 'Katalog anime movie'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/genres</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Unified genre list across Sakunime servers' : 'Daftar semua genre gabungan Sakunime'"></span>
+            </li>
+            <li class="p-2 rounded-lg bg-canvas-200/50 dark:bg-terminal-header border border-canvas-300 dark:border-terminal-border flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-emerald-500">GET</strong> <code class="text-abyss-900 dark:text-abyss-100">/api/v1/sakunime/genre/:slug?page=1</code></div>
+              <span class="text-abyss-500" x-text="lang === 'en' ? 'Anime catalog filtered by genre slug' : 'Katalog anime berdasarkan slug genre'"></span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 10: CROSS-PROVIDER MAL BRIDGE -->
       <!-- ======================================================== -->
       <section id="mal-linker" class="scroll-mt-24 space-y-6">
         <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
@@ -1269,17 +1490,17 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
             <span class="text-xs font-mono text-abyss-400">scraper/malLinker.js</span>
           </div>
           <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">9</span>
-            <span>MAL-to-Sokuja Bridge System</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">10</span>
+            <span>Cross-Provider MAL Bridge System</span>
           </h2>
         </div>
 
         <p class="text-xs sm:text-sm text-abyss-700 dark:text-abyss-300 leading-relaxed">
           <span x-show="lang === 'en'">
-            The main challenge in linking MyAnimeList and fansub websites is title variation (such as appended <code class="font-mono text-ember-500">Subtitle Indonesia</code>, Roman numerals like <code class="font-mono text-ember-500">II / III</code>, or keywords like <code class="font-mono text-ember-500">Part 2 / Cour 2</code>).
+            Both <code class="font-mono text-ember-500">MalSokujaLinker</code> and <code class="font-mono text-ember-500">MalSakunimeLinker</code> automatically resolve MyAnimeList numeric IDs to Sokuja ID and Sakunime slugs despite title differences (such as appended <code class="font-mono text-ember-500">Subtitle Indonesia</code>, server prefixes <code class="font-mono text-ember-500">hid~ / sm~</code>, Roman numerals <code class="font-mono text-ember-500">II / III</code>, or <code class="font-mono text-ember-500">Part 2 / Cour 2</code>).
           </span>
           <span x-show="lang === 'id'" x-cloak>
-            Tantangan utama menghubungkan MyAnimeList dan situs fansub adalah perbedaan format penamaan (seperti penambahan kata <code class="font-mono text-ember-500">Subtitle Indonesia</code>, angka romawi <code class="font-mono text-ember-500">II / III</code>, atau kata <code class="font-mono text-ember-500">Part 2 / Cour 2</code>).
+            Baik <code class="font-mono text-ember-500">MalSokujaLinker</code> maupun <code class="font-mono text-ember-500">MalSakunimeLinker</code> secara otomatis menerjemahkan ID numerik MyAnimeList ke slug Sokuja ID dan Sakunime meskipun terdapat perbedaan format penamaan (seperti imbuhan <code class="font-mono text-ember-500">Subtitle Indonesia</code>, awalan server <code class="font-mono text-ember-500">hid~ / sm~</code>, angka romawi <code class="font-mono text-ember-500">II / III</code>, maupun <code class="font-mono text-ember-500">Part 2 / Cour 2</code>).
           </span>
         </p>
 
@@ -1292,49 +1513,50 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
               <span x-show="lang === 'id'" x-cloak>Membersihkan kata henti (stop-words) seperti <em>"sub indo"</em>, <em>"subtitle indonesia"</em>, dan tanda baca khusus.</span>
             </li>
             <li>
-              <strong>Roman Numeral & Season Detection</strong>:
+              <strong>Roman Numeral &amp; Season Detection</strong>:
               <span x-show="lang === 'en'">Converts Roman numerals (e.g. <code>Mushoku Tensei II</code>) into season 2, and detects expressions like <code>Season 2</code>, <code>2nd Season</code>, and <code>S2</code>.</span>
               <span x-show="lang === 'id'" x-cloak>Mengubah angka romawi (e.g. <code>Mushoku Tensei II</code>) menjadi nomor season 2, serta mendeteksi kata <code>Season 2</code>, <code>2nd Season</code>, dan <code>S2</code>.</span>
             </li>
             <li>
-              <strong>Cour & Part Parsing</strong>:
+              <strong>Cour &amp; Part Parsing</strong>:
               <span x-show="lang === 'en'">Detects multi-part seasons such as <code>Part 1</code>, <code>Part 2</code>, <code>Zenpen</code>, and <code>Kouhen</code>.</span>
               <span x-show="lang === 'id'" x-cloak>Mendeteksi pembagian musim seperti <code>Part 1</code>, <code>Part 2</code>, <code>Zenpen</code>, dan <code>Kouhen</code>.</span>
             </li>
             <li>
               <strong>Aired Year Cross-Validation</strong>:
-              <span x-show="lang === 'en'">Verifies release years against MyAnimeList premiere dates to prevent false positives with reboots or classic titles.</span>
-              <span x-show="lang === 'id'" x-cloak>Memverifikasi tahun rilis dari data MyAnimeList untuk mencegah false positive pada judul remake/reboot.</span>
+              <span x-show="lang === 'en'">Verifies release years against MyAnimeList premiere dates to prevent false positives with reboots or sequels.</span>
+              <span x-show="lang === 'id'" x-cloak>Memverifikasi tahun rilis dari data MyAnimeList untuk mencegah false positive pada judul remake/sequel.</span>
             </li>
             <li>
-              <strong>Jaccard Similarity Scoring</strong>:
-              <span x-show="lang === 'en'">Calculates token overlap percentage and picks the highest scoring match with a safe confidence threshold.</span>
-              <span x-show="lang === 'id'" x-cloak>Menghitung persentase kemiripan token kata untuk memilih entri terbaik dengan threshold kepercayaan tinggi.</span>
+              <strong>Dice Similarity &amp; Multi-Server Ranking</strong>:
+              <span x-show="lang === 'en'">Calculates token overlap score and prioritizes high-availability servers (e.g. Sakunime <code>hid~</code> Server 1) while returning cross-server alternatives.</span>
+              <span x-show="lang === 'id'" x-cloak>Menghitung skor kemiripan token dan memprioritaskan server utama (seperti Sakunime <code>hid~</code> Server 1) sekaligus menyertakan alternatif server lainnya.</span>
             </li>
           </ol>
         </div>
 
-        <!-- 9.2 Endpoint Resolve -->
+        <!-- 10.2 Endpoint Resolve -->
         <div id="mal-resolve" class="scroll-mt-24 p-5 rounded-2xl border border-canvas-300 dark:border-abyss-800 bg-canvas-50 dark:bg-abyss-900/60 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">GET</span>
-              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/sokujaId/resolve/:malId</code>
+              <code class="font-mono text-xs sm:text-sm font-semibold text-abyss-900 dark:text-abyss-100">/api/v1/{sokujaId|sakunime}/resolve/:malId</code>
             </div>
-            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">sokuja.resolveMalId(malId)</code></span>
+            <span class="text-xs font-mono text-abyss-500">SDK: <code class="text-ember-500">provider.resolveMalId(malId)</code></span>
           </div>
 
           <p class="text-xs sm:text-sm text-abyss-600 dark:text-abyss-400">
-            <span x-show="lang === 'en'">Test direct resolution from a MAL ID to the matching Sokuja slug along with confidence score and match metadata:</span>
-            <span x-show="lang === 'id'" x-cloak>Menguji resolusi langsung ID MAL menjadi slug Sokuja beserta skor kecocokan dan detail matching:</span>
+            <span x-show="lang === 'en'">Test direct resolution from a MAL ID to the matching Sokuja ID or Sakunime slug along with confidence score and alternative server matches:</span>
+            <span x-show="lang === 'id'" x-cloak>Menguji resolusi langsung ID MAL menjadi slug Sokuja ID maupun Sakunime beserta skor kecocokan dan daftar server alternatif:</span>
           </p>
 
-          <pre><code class="language-bash">curl http://localhost:3000/api/v1/sokujaId/resolve/52991</code></pre>
+          <pre><code class="language-bash">curl http://localhost:3000/api/v1/sokujaId/resolve/52991
+curl http://localhost:3000/api/v1/sakunime/resolve/52991</code></pre>
         </div>
       </section>
 
       <!-- ======================================================== -->
-      <!-- SECTION 10: INTERACTIVE API PLAYGROUND -->
+      <!-- SECTION 11: INTERACTIVE API PLAYGROUND -->
       <!-- ======================================================== -->
       <section id="playground" class="scroll-mt-24 space-y-6">
         <div class="border-b border-canvas-300 dark:border-abyss-800 pb-3">
@@ -1343,7 +1565,7 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
             <span class="text-xs font-mono text-ember-500 font-semibold" x-text="lang === 'en' ? 'Try Live in Browser' : 'Coba Langsung di Browser'">Try Live in Browser</span>
           </div>
           <h2 class="font-display text-2xl font-bold text-abyss-950 dark:text-abyss-50 flex items-center gap-2.5">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">10</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-ember-500/10 text-ember-500 border border-ember-500/20 text-sm font-mono">11</span>
             <span>Interactive API Playground</span>
           </h2>
         </div>
@@ -1367,31 +1589,31 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
             </button>
             <button
               type="button"
-              @click="setPlayground('/api/v1/myanimelist/top?type=all&page=1')"
-              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
-            >
-              MAL Top Anime
-            </button>
-            <button
-              type="button"
-              @click="setPlayground('/api/v1/sokujaId/home')"
-              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
-            >
-              Sokuja Home
-            </button>
-            <button
-              type="button"
               @click="setPlayground('/api/v1/sokujaId/52991')"
               class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
             >
-              Sokuja via MAL ID (52991)
+              Sokuja via MAL ID
             </button>
             <button
               type="button"
-              @click="setPlayground('/api/v1/sokujaId/52991/episode/1')"
+              @click="setPlayground('/api/v1/sakunime/anime/hid~frieren-beyond-journeys-end-154587')"
               class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
             >
-              Sokuja Stream Ep 1
+              Sakunime Slug (hid~)
+            </button>
+            <button
+              type="button"
+              @click="setPlayground('/api/v1/sakunime/anime/hid~frieren-beyond-journeys-end-154587/episode/1')"
+              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
+            >
+              Sakunime HLS Ep 1
+            </button>
+            <button
+              type="button"
+              @click="setPlayground('/api/v1/sakunime/resolve/52991')"
+              class="px-2.5 py-1 rounded-lg text-xs font-mono border border-canvas-300 dark:border-terminal-border bg-canvas-200 dark:bg-terminal-header hover:border-ember-500 transition-colors"
+            >
+              Sakunime Resolve MAL
             </button>
           </div>
 
@@ -1477,8 +1699,9 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
         <li><a href="#sdk-usage" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">6. Node.js SDK Usage</span><span x-show="lang === 'id'" x-cloak>6. Node.js SDK Usage</span></a></li>
         <li><a href="#mal-reference" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">7. MyAnimeList Reference</span><span x-show="lang === 'id'" x-cloak>7. MyAnimeList Reference</span></a></li>
         <li><a href="#sokuja-reference" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">8. Sokuja ID Reference</span><span x-show="lang === 'id'" x-cloak>8. Sokuja ID Reference</span></a></li>
-        <li><a href="#mal-linker" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">9. MAL-to-Sokuja Bridge</span><span x-show="lang === 'id'" x-cloak>9. MAL-to-Sokuja Bridge</span></a></li>
-        <li><a href="#playground" class="hover:text-ember-500 transition-colors block font-semibold text-ember-500">10. Live Playground</a></li>
+        <li><a href="#sakunime-reference" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">9. Sakunime Reference</span><span x-show="lang === 'id'" x-cloak>9. Sakunime Reference</span></a></li>
+        <li><a href="#mal-linker" class="hover:text-ember-500 transition-colors block"><span x-show="lang === 'en'">10. Cross-Provider MAL Bridge</span><span x-show="lang === 'id'" x-cloak>10. Cross-Provider MAL Bridge</span></a></li>
+        <li><a href="#playground" class="hover:text-ember-500 transition-colors block font-semibold text-ember-500">11. Live Playground</a></li>
       </ul>
     </aside>
 
@@ -1518,7 +1741,7 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
 
           // Scroll spy for active section
           window.addEventListener('scroll', () => {
-            const sections = ['intro', 'features', 'setup', 'quickstart', 'structure', 'sdk-usage', 'mal-reference', 'sokuja-reference', 'mal-linker', 'playground'];
+            const sections = ['intro', 'features', 'setup', 'quickstart', 'structure', 'sdk-usage', 'mal-reference', 'sokuja-reference', 'sakunime-reference', 'mal-linker', 'playground'];
             const scrollPos = window.scrollY + 120;
             for (let i = sections.length - 1; i >= 0; i--) {
               const el = document.getElementById(sections[i]);
@@ -1534,6 +1757,10 @@ curl http://localhost:3000/api/v1/sokujaId/episode/end-sousou-no-frieren-episode
             if (!val || val.length < 2) return;
             const q = val.toLowerCase();
             const targets = [
+              { key: 'sakunime', id: 'sakunime-reference' },
+              { key: 'hid~', id: 'sakunime-slugs' },
+              { key: 'hls', id: 'sakunime-stream' },
+              { key: 'subtitle', id: 'sakunime-stream' },
               { key: 'search', id: 'mal-search' },
               { key: 'cari', id: 'mal-search' },
               { key: 'top', id: 'mal-top' },
