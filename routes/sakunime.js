@@ -11,29 +11,32 @@ router.get('/', (req, res) => {
     status: 'success',
     provider: 'sakunime',
     message:
-      'Sakunime Multi-Server Scraper REST API (Supports Prefixed Slugs hid~/sm~/otaku & MyAnimeList ID Linking)',
+      'Sakunime Multi-Server Scraper REST API (Supports MyAnimeList ID Linking & Prefixed Slugs hid~/sm~/otaku)',
     servers: {
       hid: 'Server 1 — Sub Indo (AI), Sub Eng & Dub Eng (slug prefix: hid~ or hi~)',
       sm: 'Server 2 — Samehadaku Sub Indo (slug prefix: sm~)',
       otaku: 'Server 3 — Otakudesu Sub Indo (unprefixed slug)'
     },
     endpoints: {
-      // Access using Sakunime Slug (hid~ / sm~ / unprefixed)
+      // Direct access using MyAnimeList Numeric ID (Dual-Mode, just like sokujaId)
+      animeByMalIdSeason1: `${basePath}/52991`,
+      animeByMalIdSeason2: `${basePath}/59978`,
+      animeByMalIdWithServer: `${basePath}/52991?server=sm`,
+      episodesByMalId: `${basePath}/52991/episodes?page=1&order=asc`,
+      episodeStreamByMalId: `${basePath}/52991/episode/1`,
+      charactersByMalId: `${basePath}/52991/characters`,
+      recommendationsByMalId: `${basePath}/52991/recommendations`,
+      resolveMalId: `${basePath}/resolve/52991`,
+
+      // Access using Sakunime Slug (hid~ / sm~ / unprefixed) — auto-enriched with linked malId
       animeBySlugSeason1: `${basePath}/anime/hid~frieren-beyond-journeys-end-154587`,
       animeBySlugSeason2: `${basePath}/anime/hid~frieren-beyond-journeys-end-season-2-182255`,
       episodesBySlug: `${basePath}/anime/hid~frieren-beyond-journeys-end-154587/episodes?page=1&order=asc`,
       episodeStreamByAnimeSlug: `${basePath}/anime/hid~frieren-beyond-journeys-end-154587/episode/1`,
       episodeStreamByEpisodeSlug: `${basePath}/episode/hid~frieren-beyond-journeys-end-154587~1~1`,
       resolveServerStream: `${basePath}/server/hie~frieren-beyond-journeys-end-154587~1~megaplay~sub`,
+      charactersBySlug: `${basePath}/anime/hid~frieren-beyond-journeys-end-154587/characters`,
       recommendationsBySlug: `${basePath}/anime/hid~frieren-beyond-journeys-end-154587/recommendations`,
-
-      // Direct access using MyAnimeList Numeric ID (Dual-Mode)
-      animeByMalIdSeason1: `${basePath}/52991`,
-      animeByMalIdSeason2: `${basePath}/59978`,
-      episodesByMalId: `${basePath}/52991/episodes?page=1&order=asc`,
-      episodeStreamByMalId: `${basePath}/52991/episode/1`,
-      recommendationsByMalId: `${basePath}/52991/recommendations`,
-      resolveMalId: `${basePath}/resolve/52991`,
 
       // Catalog, Search, Schedule & Genres
       home: `${basePath}/home?page=1`,
@@ -195,7 +198,8 @@ router.get('/genre/:slug', async (req, res) => {
 // 13. Resolve MyAnimeList Numeric ID -> Sakunime Anime Slug
 router.get('/resolve/:malId', async (req, res) => {
   const { malId } = req.params;
-  const data = await sakunimeScraper.resolveMalId(malId);
+  const { server } = req.query;
+  const data = await sakunimeScraper.resolveMalId(malId, { server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -203,10 +207,11 @@ router.get('/resolve/:malId', async (req, res) => {
   });
 });
 
-// 14. Anime Detail, Episodes, Episode Stream & Recommendations via `/anime/:idOrSlug`
+// 14. Anime Detail, Episodes, Episode Stream, Characters & Recommendations via `/anime/:idOrSlug`
 router.get('/anime/:idOrSlug', async (req, res) => {
   const { idOrSlug } = req.params;
-  const data = await sakunimeScraper.getAnimeDetail(idOrSlug);
+  const { server } = req.query;
+  const data = await sakunimeScraper.getAnimeDetail(idOrSlug, { server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -216,8 +221,8 @@ router.get('/anime/:idOrSlug', async (req, res) => {
 
 router.get('/anime/:idOrSlug/episodes', async (req, res) => {
   const { idOrSlug } = req.params;
-  const { page, limit, order } = req.query;
-  const result = await sakunimeScraper.getAnimeEpisodes(idOrSlug, { page, limit, order });
+  const { page, limit, order, server } = req.query;
+  const result = await sakunimeScraper.getAnimeEpisodes(idOrSlug, { page, limit, order, server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -227,8 +232,19 @@ router.get('/anime/:idOrSlug/episodes', async (req, res) => {
 
 router.get('/anime/:idOrSlug/episode/:number', async (req, res) => {
   const { idOrSlug, number } = req.params;
-  const { type } = req.query;
-  const data = await sakunimeScraper.getAnimeEpisode(idOrSlug, number, { type });
+  const { type, server } = req.query;
+  const data = await sakunimeScraper.getAnimeEpisode(idOrSlug, number, { type, server });
+  res.json({
+    status: 'success',
+    provider: 'sakunime',
+    data
+  });
+});
+
+router.get('/anime/:idOrSlug/characters', async (req, res) => {
+  const { idOrSlug } = req.params;
+  const { server } = req.query;
+  const data = await sakunimeScraper.getAnimeCharacters(idOrSlug, { server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -238,7 +254,8 @@ router.get('/anime/:idOrSlug/episode/:number', async (req, res) => {
 
 router.get('/anime/:idOrSlug/recommendations', async (req, res) => {
   const { idOrSlug } = req.params;
-  const result = await sakunimeScraper.getAnimeRecommendations(idOrSlug);
+  const { server } = req.query;
+  const result = await sakunimeScraper.getAnimeRecommendations(idOrSlug, { server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -284,7 +301,8 @@ router.get('/server/:serverId', async (req, res) => {
 // Example: GET /api/v1/sakunime/52991 -> automatically links to hid~frieren-beyond-journeys-end-154587
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  const data = await sakunimeScraper.getAnimeDetail(id);
+  const { server } = req.query;
+  const data = await sakunimeScraper.getAnimeDetail(id, { server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -294,8 +312,8 @@ router.get('/:id', async (req, res) => {
 
 router.get('/:id/episodes', async (req, res) => {
   const { id } = req.params;
-  const { page, limit, order } = req.query;
-  const result = await sakunimeScraper.getAnimeEpisodes(id, { page, limit, order });
+  const { page, limit, order, server } = req.query;
+  const result = await sakunimeScraper.getAnimeEpisodes(id, { page, limit, order, server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -305,8 +323,19 @@ router.get('/:id/episodes', async (req, res) => {
 
 router.get('/:id/episode/:number', async (req, res) => {
   const { id, number } = req.params;
-  const { type } = req.query;
-  const data = await sakunimeScraper.getAnimeEpisode(id, number, { type });
+  const { type, server } = req.query;
+  const data = await sakunimeScraper.getAnimeEpisode(id, number, { type, server });
+  res.json({
+    status: 'success',
+    provider: 'sakunime',
+    data
+  });
+});
+
+router.get('/:id/characters', async (req, res) => {
+  const { id } = req.params;
+  const { server } = req.query;
+  const data = await sakunimeScraper.getAnimeCharacters(id, { server });
   res.json({
     status: 'success',
     provider: 'sakunime',
@@ -316,7 +345,8 @@ router.get('/:id/episode/:number', async (req, res) => {
 
 router.get('/:id/recommendations', async (req, res) => {
   const { id } = req.params;
-  const result = await sakunimeScraper.getAnimeRecommendations(id);
+  const { server } = req.query;
+  const result = await sakunimeScraper.getAnimeRecommendations(id, { server });
   res.json({
     status: 'success',
     provider: 'sakunime',

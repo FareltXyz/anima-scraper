@@ -296,28 +296,39 @@ You do **not** need to guess or scrape fansub title slugs. The Sokuja ID router 
 
 Base path: `/api/v1/sakunime`
 
+#### Direct MyAnimeList ID Access (Dual-Mode)
+
+Just like `sokujaId`, you do **not** need to know Sakunime's prefixed slugs (`hid~...`, `sm~...`) in advance. Every Sakunime anime & streaming endpoint accepts numeric MyAnimeList IDs directly (and even lets you pick the upstream server via `?server=hid|sm|otaku`):
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/sakunime/:malId` | Fetch full Sakunime anime details using MAL ID (e.g. `/52991` or `/52991?server=sm`) |
+| `GET` | `/api/v1/sakunime/:malId/episodes` | List paginated & sorted episodes using MAL ID (`?page=1&limit=100&order=asc`) |
+| `GET` | `/api/v1/sakunime/:malId/episode/:number` | **Fetch 1080p HLS `.m3u8`, subtitles, mirrors & downloads** (e.g. `/52991/episode/1?type=sub`) |
+| `GET` | `/api/v1/sakunime/:malId/characters` | Fetch linked characters, voice actors (Seiyuu) & staff using MAL ID |
+| `GET` | `/api/v1/sakunime/:malId/recommendations` | Fetch related / recommended anime using MAL ID |
+| `GET` | `/api/v1/sakunime/resolve/:malId` | Resolve MAL ID to Sakunime slug with confidence score & cross-server alternatives |
+
 #### Prefixed Slugs & Multi-Server Architecture
 
-Sakunime (`https://sakunime.com`) aggregates three upstream streaming servers distinguished by slug prefixes:
+Sakunime (`https://sakunime.com`) aggregates three upstream streaming servers distinguished by slug prefixes (all slug queries are also **reverse-linked** to attach `malId` & `malUrl` automatically):
 - **Server 1 (`hid~` / `hi~`)**: e.g. `hid~frieren-beyond-journeys-end-154587` — 1080p HLS `.m3u8` master playlists, Sakunime HLS proxy URLs, WebVTT subtitles (`Indonesia (AI)`, `English`, etc.), iframe fallbacks, and English Dub options.
 - **Server 2 (`sm~`)**: e.g. `sm~sousou-no-frieren` — Samehadaku Indonesian subtitled embeds and multi-resolution cloud downloads.
-- **Server 3 (unprefixed)**: e.g. `frieren-sub-indo` — Otakudesu Indonesian subtitled embeds and downloads.
+- **Server 3 (unprefixed)**: e.g. `sousou-frieren-sub-indo` — Otakudesu Indonesian subtitled embeds and downloads.
 
-Catalog and search endpoints accept an optional `?server=` query filter (`all`, `hid`, `sm`, `otaku`).
+Catalog, search, and MAL ID endpoints accept an optional `?server=` query filter (`all`, `hid`, `sm`, `otaku`).
 
-#### Sakunime Endpoints & Dual-Mode MAL ID Access
+#### Native Sakunime Endpoints
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/v1/sakunime/anime/:idOrSlug` | Anime detail by prefixed slug (e.g. `hid~frieren-beyond-journeys-end-154587`) or MAL ID (`52991`) |
 | `GET` | `/api/v1/sakunime/anime/:idOrSlug/episodes` | Paginated & sortable episode list (`?page=1&limit=100&order=asc`) |
 | `GET` | `/api/v1/sakunime/anime/:idOrSlug/episode/:number` | **Fetch HLS stream, subtitles, mirrors & downloads** (`?type=sub\|dub`) |
+| `GET` | `/api/v1/sakunime/anime/:idOrSlug/characters` | Characters, voice actors (Seiyuu) & staff via linked MyAnimeList ID |
 | `GET` | `/api/v1/sakunime/anime/:idOrSlug/recommendations` | Related / recommended anime |
 | `GET` | `/api/v1/sakunime/episode/:episodeSlug` | Episode stream by episode slug (e.g. `hid~frieren-beyond-journeys-end-154587~1~1`; alias `/watch/:slug`) |
 | `GET` | `/api/v1/sakunime/server/:serverId` | Resolve individual server ID (`hie~...`, `sms~...`, or Server 3 ID) to playable URL |
-| `GET` | `/api/v1/sakunime/:malId` | Direct Dual-Mode anime detail via numeric MAL ID (e.g. `/52991`) |
-| `GET` | `/api/v1/sakunime/:malId/episode/:number` | Direct Dual-Mode episode stream via numeric MAL ID (e.g. `/52991/episode/1`) |
-| `GET` | `/api/v1/sakunime/resolve/:malId` | Resolve numeric MAL ID to Sakunime slug with confidence & server alternatives |
 | `GET` | `/api/v1/sakunime/home?page=1&server=all` | Homepage featured hero, latest releases, ongoing, completed, popular & genres |
 | `GET` | `/api/v1/sakunime/latest?page=1` | Paginated latest episode updates |
 | `GET` | `/api/v1/sakunime/search?q=:query&server=all` | Multi-server keyword search |
@@ -346,17 +357,17 @@ async function main() {
   const anime = await mal.getAnimeById(52991);
   console.log(`Title: ${anime.title} | Score: ${anime.score}`);
 
-  // 2. Initialize Sokuja ID provider
+  // 2. Initialize Sokuja ID provider (via MAL ID)
   const sokuja = new AnimaScraper({ provider: 'sokujaId' });
   const streamData = await sokuja.getAnimeEpisode(52991, 28);
   console.log(`Sokuja Episode: ${streamData.title}`);
 
-  // 3. Initialize Sakunime provider (Prefixed Slugs & Multi-Server HLS)
+  // 3. Initialize Sakunime provider (via MAL ID OR Prefixed Slugs)
   const sakunime = new AnimaScraper({ provider: 'sakunime' });
-  const sakuAnime = await sakunime.getAnimeDetail('hid~frieren-beyond-journeys-end-154587');
-  console.log(`Sakunime: ${sakuAnime.title} (${sakuAnime.episodeCount} eps)`);
+  const sakuAnime = await sakunime.getAnimeDetail(52991); // auto-links to hid~frieren-beyond-journeys-end-154587
+  console.log(`Sakunime: ${sakuAnime.title} -> ${sakuAnime.slug} (${sakuAnime.episodeCount} eps)`);
 
-  const sakuStream = await sakunime.getAnimeEpisode('hid~frieren-beyond-journeys-end-154587', 1);
+  const sakuStream = await sakunime.getAnimeEpisode(52991, 1);
   console.log('HLS Master Playlist:', sakuStream.hlsUrl);
   console.log('Subtitles:', sakuStream.subtitles.slice(0, 3));
 }
@@ -370,17 +381,14 @@ main().catch(console.error);
 
 When you make a request to `/api/v1/sokujaId/:malId` or `/api/v1/sakunime/:malId`:
 
-1. **Metadata Acquisition**: AnimaScraper fetches title variations (canonical, English, synonyms), release year, media format, and episode count from MyAnimeList.
-2. **Title Normalization**:
-   - Strips fansub stop-words (e.g., `subtitle indonesia`, `sub indo`).
+1. **Deterministic AniList-MAL ID Bridge (Sakunime Server 1)**: Sakunime's `hid~` / `hi~` slugs embed the anime's AniList ID (`hid~{slug}-{anilistId}`). `MalSakunimeLinker` maps `MAL ID` $\leftrightarrow$ `AniList ID` deterministically (`confidence: 1.0`) in both directions — resolving numeric MAL IDs directly to canonical `hid~` slugs and reverse-enriching slug queries with `malId` & `malUrl`.
+2. **Metadata Acquisition**: For Sokuja ID and Sakunime Server 2/3 (`sm~` / `otaku`), AnimaScraper fetches title variations (canonical, English, synonyms), release year, media format, and episode count from MyAnimeList.
+3. **Title Normalization**:
+   - Strips fansub stop-words (e.g., `subtitle indonesia`, `sub indo`) and excludes individual episode / batch RAR posts.
    - Translates Roman numerals (`II`, `III`, `IV`, `V`) to numeric seasons (`2`, `3`, etc.).
    - Recognizes multi-cour designations (`Part 1`, `Part 2`, `Zenpen`, `Kouhen`).
-3. **Similarity Scoring**:
-   - Computes Dice token similarity across full title and core title tokens.
-   - Applies score penalties for season discrepancies and media type mismatches (e.g., movie vs. TV).
-   - Validates against premiere year with a tolerance window.
-4. **Resolution Threshold**:
-   - Matches with confidence $\ge 0.62$ are automatically linked and cached in memory.
+4. **Similarity Scoring & Resolution**:
+   - Computes Dice token similarity across full title and core title tokens, penalizes season/type discrepancies, validates against premiere year, and caches verified matches in memory.
 
 ---
 

@@ -305,6 +305,7 @@ class Sakunime {
     this.timeout = options.timeout || 20000;
     this.cacheTTL = options.cacheTTL ?? 5 * 60 * 1000;
     this.cache = new Map();
+    this.inflight = new Map();
     this.headers = {
       'User-Agent': options.userAgent || DEFAULT_USER_AGENT,
       Accept: 'application/json, text/plain, */*',
@@ -320,7 +321,7 @@ class Sakunime {
     });
   }
 
-  async _fetchJson(url, { ttl = this.cacheTTL, timeout = this.timeout } = {}) {
+  async _fetchJson(url, { ttl = this.cacheTTL, timeout = this.timeout, retries = 2 } = {}) {
     const now = Date.now();
     if (ttl > 0 && this.cache.has(url)) {
       const cached = this.cache.get(url);
@@ -330,45 +331,70 @@ class Sakunime {
       this.cache.delete(url);
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.headers,
-        signal: controller.signal
-      });
-
-      if (!response.ok) {
-        throw new ScraperError(
-          `Failed to fetch data from Sakunime (HTTP ${response.status})`,
-          response.status === 404 ? 404 : response.status === 429 ? 429 : 502
-        );
-      }
-
-      const json = await response.json();
-
-      if (ttl > 0) {
-        if (this.cache.size >= 400) {
-          const oldestKey = this.cache.keys().next().value;
-          this.cache.delete(oldestKey);
-        }
-        this.cache.set(url, { data: json, timestamp: now });
-      }
-
-      return json;
-    } catch (err) {
-      if (err instanceof ScraperError) throw err;
-      if (err.name === 'AbortError') {
-        throw new ScraperError(`Request to Sakunime timed out (${timeout}ms)`, 504);
-      }
-      if (err instanceof SyntaxError) {
-        throw new ScraperError('Invalid JSON response received from Sakunime upstream.', 502);
-      }
-      throw new ScraperError(`Network error while contacting Sakunime: ${err.message}`, 502);
-    } finally {
-      clearTimeout(timer);
+    if (this.inflight.has(url)) {
+      return this.inflight.get(url);
     }
+
+    const runFetch = async () => {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+
+        try {
+          const response = await fetch(url, {
+            headers: this.headers,
+            signal: controller.signal
+          });
+
+          if (response.status === 429 && attempt < retries) {
+            clearTimeout(timer);
+            const retryAfter = parseInt(response.headers.get('retry-after') || '', 10);
+            const waitMs =
+              !Number.isNaN(retryAfter) && retryAfter > 0
+                ? Math.min(retryAfter * 1000, 4000)
+                : 1200 * (attempt + 1);
+            await new Promise((r) => setTimeout(r, waitMs));
+            continue;
+          }
+
+          if (!response.ok) {
+            throw new ScraperError(
+              `Failed to fetch data from Sakunime (HTTP ${response.status})`,
+              response.status === 404 ? 404 : response.status === 429 ? 429 : 502
+            );
+          }
+
+          const json = await response.json();
+
+          if (ttl > 0) {
+            if (this.cache.size >= 400) {
+              const oldestKey = this.cache.keys().next().value;
+              this.cache.delete(oldestKey);
+            }
+            this.cache.set(url, { data: json, timestamp: Date.now() });
+          }
+
+          return json;
+        } catch (err) {
+          if (err instanceof ScraperError) throw err;
+          if (err.name === 'AbortError') {
+            throw new ScraperError(`Request to Sakunime timed out (${timeout}ms)`, 504);
+          }
+          if (err instanceof SyntaxError) {
+            throw new ScraperError('Invalid JSON response received from Sakunime upstream.', 502);
+          }
+          throw new ScraperError(`Network error while contacting Sakunime: ${err.message}`, 502);
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+    };
+
+    const promise = runFetch().finally(() => {
+      this.inflight.delete(url);
+    });
+    this.inflight.set(url, promise);
+    return promise;
   }
 
   async _hiGet(path, options = {}) {
@@ -1395,44 +1421,50 @@ class Sakunime {
    * 13. Resolve MyAnimeList Numeric ID -> Sakunime Anime Slug
    * e.g. `52991` -> `hid~frieren-beyond-journeys-end-154587`
    */
-  async resolveMalId(malId) {
-    return this.malLinker.resolveMalId(malId);
+  async resolveMalId(malId, options = {}) {
+    return this.malLinker.resolveMalId(malId, options);
   }
 
   /**
    * 14. Full Sakunime Anime Detail via MyAnimeList Numeric ID
    */
-  async getAnimeByMalId(malId) {
-    const resolved = await this.resolveMalId(malId);
-    const detail = await this._getAnimeDetailBySlug(resolved.slug);
+  async getAnimeByMalId(malId, options = {}) {
+    const resolved = await this.resolveMalId(malId, {
+      ...options,
+      includeAlternatives: options.includeAlternatives ?? false
+    });
+    const detail = await this._getAnimeDetailBySlug(resolved.slug, { skipMalLink: true });
     return {
       malId: resolved.malId,
       malUrl: resolved.mal.url,
       linkedMal: {
         ...resolved.mal,
+        anilistId: resolved.anilistId,
+        matchMethod: resolved.matchMethod,
         confidence: resolved.confidence,
         matchScore: resolved.matchScore,
         alternatives: resolved.alternatives
       },
-      ...detail
+      ...detail,
+      anilistId: detail.anilistId || resolved.anilistId || null
     };
   }
 
   /**
    * 15. Full Anime Details by Sakunime Slug (`hid~...`, `hi~...`, `sm~...`, or Otakudesu slug) OR MyAnimeList Numeric ID
    */
-  async getAnimeDetail(idOrSlug) {
+  async getAnimeDetail(idOrSlug, options = {}) {
     if (isNumericMalId(idOrSlug)) {
-      return this.getAnimeByMalId(idOrSlug);
+      return this.getAnimeByMalId(idOrSlug, options);
     }
-    return this._getAnimeDetailBySlug(idOrSlug);
+    return this._getAnimeDetailBySlug(idOrSlug, options);
   }
 
-  async getAnimeById(idOrSlug) {
-    return this.getAnimeDetail(idOrSlug);
+  async getAnimeById(idOrSlug, options = {}) {
+    return this.getAnimeDetail(idOrSlug, options);
   }
 
-  async _getAnimeDetailBySlug(rawInput) {
+  async _getAnimeDetailBySlug(rawInput, options = {}) {
     const parsed = parseAnimeSlug(rawInput);
     if (!parsed || !parsed.rawId) {
       throw new ScraperError(
@@ -1441,38 +1473,56 @@ class Sakunime {
       );
     }
 
+    let detail = null;
+
     if (parsed.server === 'hid' || parsed.server === 'hi') {
-      return this._fetchHiAnimeDetail(parsed);
-    }
-
-    if (parsed.server === 'sm') {
-      return this._fetchSmAnimeDetail(parsed);
-    }
-
-    // Unprefixed slug: if it looks like a bare Server 1 slug (`title-154587` without `-sub-indo`), try Server 1 if Otakudesu fails (or first if trailing AniList ID)
-    const looksLikeBareHiSlug = /-\d{2,8}$/.test(parsed.rawId) && !/-sub-indo$/i.test(parsed.rawId);
-    if (looksLikeBareHiSlug) {
-      try {
-        return await this._fetchHiAnimeDetail(parseAnimeSlug(`hid~${parsed.rawId}`));
-      } catch {
-        // Continue to Otakudesu / Server 2 fallbacks
-      }
-    }
-
-    try {
-      return await this._fetchOtakuAnimeDetail(parsed);
-    } catch (otakuErr) {
-      // Fallback: check if user passed a bare Server 1 or Server 2 slug without prefix
-      try {
-        return await this._fetchHiAnimeDetail(parseAnimeSlug(`hid~${parsed.rawId}`));
-      } catch {
+      detail = await this._fetchHiAnimeDetail(parsed);
+    } else if (parsed.server === 'sm') {
+      detail = await this._fetchSmAnimeDetail(parsed);
+    } else {
+      // Unprefixed slug: if it looks like a bare Server 1 slug (`title-154587` without `-sub-indo`), try Server 1 first
+      const looksLikeBareHiSlug =
+        /-\d{2,8}$/.test(parsed.rawId) && !/-sub-indo$/i.test(parsed.rawId);
+      if (looksLikeBareHiSlug) {
         try {
-          return await this._fetchSmAnimeDetail(parseAnimeSlug(`sm~${parsed.rawId}`));
+          detail = await this._fetchHiAnimeDetail(parseAnimeSlug(`hid~${parsed.rawId}`));
         } catch {
-          throw otakuErr;
+          // Continue to Otakudesu / Server 2 fallbacks
+        }
+      }
+
+      if (!detail) {
+        try {
+          detail = await this._fetchOtakuAnimeDetail(parsed);
+        } catch (otakuErr) {
+          // Fallback: check if user passed a bare Server 1 or Server 2 slug without prefix
+          try {
+            detail = await this._fetchHiAnimeDetail(parseAnimeSlug(`hid~${parsed.rawId}`));
+          } catch {
+            try {
+              detail = await this._fetchSmAnimeDetail(parseAnimeSlug(`sm~${parsed.rawId}`));
+            } catch {
+              throw otakuErr;
+            }
+          }
         }
       }
     }
+
+    if (!options.skipMalLink) {
+      const malInfo = await this.malLinker.resolveSlugToMalInfo(detail).catch(() => null);
+      if (malInfo) {
+        return {
+          malId: malInfo.malId,
+          malUrl: malInfo.malUrl,
+          linkedMal: malInfo.linkedMal,
+          ...detail,
+          anilistId: detail.anilistId || malInfo.anilistId || null
+        };
+      }
+    }
+
+    return detail;
   }
 
   async _fetchHiAnimeDetail(parsed) {
@@ -1485,9 +1535,15 @@ class Sakunime {
       throw new ScraperError(`Anime "${parsed.slug}" not found on Sakunime.`, 404);
     }
 
+    const canonicalRawId = String(d.id || parsed.rawId).trim();
+    const canonicalSlug = `${parsed.prefix}${canonicalRawId}`;
+    const anilistMatch =
+      canonicalRawId.match(/-(\d{2,8})$/) || canonicalRawId.match(/^(\d{2,8})$/);
+    const canonicalAnilistId = anilistMatch ? parseInt(anilistMatch[1], 10) : parsed.anilistId;
+
     const romajiTitle = String(d.jtitle || '').trim();
     const englishTitle = String(d.title || '').trim();
-    const title = romajiTitle || englishTitle || parsed.rawId;
+    const title = romajiTitle || englishTitle || canonicalRawId;
 
     const altSet = new Set();
     if (englishTitle && englishTitle !== title) altSet.add(englishTitle);
@@ -1502,7 +1558,7 @@ class Sakunime {
       .slice()
       .sort((a, b) => (b.n || 0) - (a.n || 0))
       .map((ep) => {
-        const epSlug = `${parsed.prefix}${parsed.rawId}~${ep.ep}~${ep.n}`;
+        const epSlug = `${parsed.prefix}${canonicalRawId}~${ep.ep}~${ep.n}`;
         return {
           episodeId: String(ep.ep),
           number: ep.n,
@@ -1531,12 +1587,12 @@ class Sakunime {
       : [];
 
     return {
-      slug: parsed.slug,
-      rawId: parsed.rawId,
+      slug: canonicalSlug,
+      rawId: canonicalRawId,
       server: parsed.server,
       serverLabel: parsed.serverLabel,
-      anilistId: parsed.anilistId,
-      url: `${this.baseUrl}/anime/${parsed.slug}`,
+      anilistId: canonicalAnilistId,
+      url: `${this.baseUrl}/anime/${canonicalSlug}`,
       title,
       englishTitle: englishTitle || null,
       japaneseTitle: romajiTitle || null,
@@ -1762,7 +1818,7 @@ class Sakunime {
    * 16. Anime Episodes List (Paginated & Sortable)
    */
   async getAnimeEpisodes(idOrSlug, options = {}) {
-    const detail = await this.getAnimeDetail(idOrSlug);
+    const detail = await this.getAnimeDetail(idOrSlug, { server: options.server });
     const page = Math.max(1, parseInt(options.page, 10) || 1);
     const limit = Math.min(500, Math.max(1, parseInt(options.limit, 10) || 100));
     const order = String(options.order || 'desc').toLowerCase();
@@ -1798,10 +1854,46 @@ class Sakunime {
   }
 
   /**
-   * 17. Anime Recommendations by Slug or MAL ID
+   * 17. Anime Characters, Voice Actors (Seiyuu) & Staff by Sakunime Slug or MyAnimeList ID
+   * Uses linked MyAnimeList ID to enrich Sakunime anime with full character & seiyuu data
    */
-  async getAnimeRecommendations(idOrSlug) {
-    const detail = await this.getAnimeDetail(idOrSlug);
+  async getAnimeCharacters(idOrSlug, options = {}) {
+    const detail = await this.getAnimeDetail(idOrSlug, { server: options.server });
+    let characters = [];
+    let staff = [];
+
+    if (detail.malId) {
+      try {
+        const malChars = await this.malLinker.mal.getAnimeCharacters(detail.malId);
+        characters = malChars.characters || [];
+        staff = malChars.staff || [];
+      } catch {
+        // Gracefully return empty arrays if MyAnimeList character page cannot be fetched
+      }
+    }
+
+    return {
+      ...(detail.malId
+        ? {
+            malId: detail.malId,
+            malUrl: detail.malUrl,
+            linkedMal: detail.linkedMal
+          }
+        : {}),
+      slug: detail.slug,
+      server: detail.server,
+      title: detail.title,
+      totalCharacters: characters.length,
+      characters,
+      staff
+    };
+  }
+
+  /**
+   * 18. Anime Recommendations by Slug or MAL ID
+   */
+  async getAnimeRecommendations(idOrSlug, options = {}) {
+    const detail = await this.getAnimeDetail(idOrSlug, { server: options.server });
     let recommendations = detail.recommendations || [];
 
     // If upstream detail didn't attach recommendations (e.g. Server 1 / Server 2), suggest top anime from primary genre
@@ -1836,7 +1928,7 @@ class Sakunime {
   }
 
   /**
-   * 18. Get Episode Streaming & Downloads via Anime Slug OR MAL ID + Episode Number
+   * 19. Get Episode Streaming & Downloads via Anime Slug OR MAL ID + Episode Number
    */
   async getAnimeEpisode(idOrSlug, episodeNumber, options = {}) {
     const epNum = parseFloat(episodeNumber);
@@ -1844,7 +1936,7 @@ class Sakunime {
       throw new ScraperError('Episode number must be a positive number (e.g. 1, 28).', 400);
     }
 
-    const animeDetail = await this.getAnimeDetail(idOrSlug);
+    const animeDetail = await this.getAnimeDetail(idOrSlug, { server: options.server });
     let targetEp = animeDetail.episodeList.find((ep) => ep.number === epNum);
 
     if (!targetEp && epNum === 1 && animeDetail.episodeList.length === 1) {
@@ -1885,7 +1977,7 @@ class Sakunime {
   }
 
   /**
-   * 19. Episode Detail, HLS/Embed Video Mirrors, Subtitle Tracks & Downloads (`/watch/:episodeSlug`)
+   * 20. Episode Detail, HLS/Embed Video Mirrors, Subtitle Tracks & Downloads (`/watch/:episodeSlug`)
    * Supports:
    * - Server 1: `hid~frieren-beyond-journeys-end-154587~1~1` (or `hi~...`)
    * - Server 2: `sm~zombie-sagashitemasu-episode-4`
@@ -1942,6 +2034,10 @@ class Sakunime {
       ).catch(() => null)
     ]);
 
+    const malInfo = animeDetail?.anilistId
+      ? await this.malLinker._resolveAnilistMedia(animeDetail.anilistId).catch(() => null)
+      : null;
+
     const serverListRaw = Array.isArray(serversData?.list) ? serversData.list : [];
     if (!serverListRaw.length) {
       throw new ScraperError(`No streaming servers available for episode "${episodeSlug}".`, 404);
@@ -1952,7 +2048,8 @@ class Sakunime {
       if (matchedEp && matchedEp.number) epNum = matchedEp.number;
     }
 
-    const canonicalEpisodeSlug = `${prefix}${rawAnimeSlug}~${epParam}~${epNum}`;
+    const canonicalAnimeRawId = animeDetail?.rawId || rawAnimeSlug;
+    const canonicalEpisodeSlug = `${prefix}${canonicalAnimeRawId}~${epParam}~${epNum}`;
 
     const isVhd = (s) => /^vhd-?\d/i.test(String(s.name || s.id || ''));
     const buildServerEntry = (s) => ({
@@ -1960,7 +2057,7 @@ class Sakunime {
       upstreamId: s.id,
       audioType: s.type || 'sub',
       playerKind: isVhd(s) ? 'embed' : 'hls',
-      serverId: `hie~${rawAnimeSlug}~${epParam}~${s.id}~${s.type || 'sub'}`
+      serverId: `hie~${canonicalAnimeRawId}~${epParam}~${s.id}~${s.type || 'sub'}`
     });
 
     const allServers = serverListRaw.map(buildServerEntry);
@@ -2029,6 +2126,12 @@ class Sakunime {
     const nextEp = currentIdx > 0 && epList[currentIdx - 1] ? epList[currentIdx - 1] : null;
 
     return {
+      ...(malInfo
+        ? {
+            malId: malInfo.malId,
+            malUrl: malInfo.malUrl
+          }
+        : {}),
       slug: canonicalEpisodeSlug,
       episodeId: String(epParam),
       episodeNumber: epNum,
@@ -2047,8 +2150,8 @@ class Sakunime {
       subtitles,
       navigation: {
         prevEpisode: prevEp ? { slug: prevEp.slug, number: prevEp.number, url: prevEp.url } : null,
-        animeSlug: `${prefix}${rawAnimeSlug}`,
-        allEpisodesUrl: `${this.baseUrl}/anime/${prefix}${rawAnimeSlug}`,
+        animeSlug: `${prefix}${canonicalAnimeRawId}`,
+        allEpisodesUrl: `${this.baseUrl}/anime/${prefix}${canonicalAnimeRawId}`,
         nextEpisode: nextEp ? { slug: nextEp.slug, number: nextEp.number, url: nextEp.url } : null
       },
       streaming: {
@@ -2060,6 +2163,8 @@ class Sakunime {
       downloads,
       anime: animeDetail
         ? {
+            ...(malInfo ? { malId: malInfo.malId, malUrl: malInfo.malUrl } : {}),
+            anilistId: animeDetail.anilistId,
             slug: animeDetail.slug,
             title: animeDetail.title,
             englishTitle: animeDetail.englishTitle,

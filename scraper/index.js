@@ -87,12 +87,12 @@ AnimaScraper.prototype.getSchedule = function getSchedule(options) {
   return this._callProvider('getSchedule', [options]);
 };
 
-AnimaScraper.prototype.resolveMalId = function resolveMalId(malId) {
-  return this._callProvider('resolveMalId', [malId]);
+AnimaScraper.prototype.resolveMalId = function resolveMalId(malId, options) {
+  return this._callProvider('resolveMalId', [malId, options]);
 };
 
-AnimaScraper.prototype.getAnimeByMalId = function getAnimeByMalId(malId) {
-  return this._callProvider('getAnimeByMalId', [malId]);
+AnimaScraper.prototype.getAnimeByMalId = function getAnimeByMalId(malId, options) {
+  return this._callProvider('getAnimeByMalId', [malId, options]);
 };
 
 AnimaScraper.prototype.getAnimeEpisode = function getAnimeEpisode(idOrSlug, episodeNumber, options) {
@@ -103,24 +103,24 @@ AnimaScraper.prototype.getEpisodeByMalId = function getEpisodeByMalId(malId, epi
   return this._callProvider('getEpisodeByMalId', [malId, episodeNumber, options]);
 };
 
-AnimaScraper.prototype.getAnimeById = function getAnimeById(idOrSlug) {
-  return this._callProvider('getAnimeById', [idOrSlug]);
+AnimaScraper.prototype.getAnimeById = function getAnimeById(idOrSlug, options) {
+  return this._callProvider('getAnimeById', [idOrSlug, options]);
 };
 
-AnimaScraper.prototype.getAnimeDetail = function getAnimeDetail(slug) {
-  return this._callProvider('getAnimeDetail', [slug]);
+AnimaScraper.prototype.getAnimeDetail = function getAnimeDetail(slug, options) {
+  return this._callProvider('getAnimeDetail', [slug, options]);
 };
 
 AnimaScraper.prototype.getAnimeEpisodes = function getAnimeEpisodes(idOrSlug, options) {
   return this._callProvider('getAnimeEpisodes', [idOrSlug, options]);
 };
 
-AnimaScraper.prototype.getAnimeCharacters = function getAnimeCharacters(idOrSlug) {
-  return this._callProvider('getAnimeCharacters', [idOrSlug]);
+AnimaScraper.prototype.getAnimeCharacters = function getAnimeCharacters(idOrSlug, options) {
+  return this._callProvider('getAnimeCharacters', [idOrSlug, options]);
 };
 
-AnimaScraper.prototype.getAnimeRecommendations = function getAnimeRecommendations(idOrSlug) {
-  return this._callProvider('getAnimeRecommendations', [idOrSlug]);
+AnimaScraper.prototype.getAnimeRecommendations = function getAnimeRecommendations(idOrSlug, options) {
+  return this._callProvider('getAnimeRecommendations', [idOrSlug, options]);
 };
 
 AnimaScraper.prototype.getEpisodeDetail = function getEpisodeDetail(episodeSlug, options) {
